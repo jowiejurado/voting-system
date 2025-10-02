@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+	--font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+		'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+:root {--bg:#0f172a;--card:#111827;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--danger:#ef4444}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	font-family: Inter,system-ui,Segoe UI,Roboto,Arial;
+}
+
+/* .container{max-width:1100px;margin:0 auto;padding:16px}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+.col{flex:1 1 280px}
+.btn{display:inline-block;padding:16px 32px;border-radius:24px;border:none;background:#000000;color:#FFFFFF;cursor:pointer;font-weight:600}
+.btn.secondary{background:#334155;color:#e2e8f0}
+.btn.danger{background:var(--danger);color:#fff}
+.label{display:block;margin:6px 0;font-size:14px;color:var(--muted)}
+nav{background:#0b1220;border-bottom:1px solid #1f2937}
+nav .container{display:flex;align-items:center;justify-content:space-between}
+a{color:#9bd6ff;text-decoration:none}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:10px;border-bottom:1px solid #1f2937;text-align:left}
+.badge{padding:4px 8px;border-radius:8px;background:#0ea5e9;color:white;font-size:12px}
+@media (max-width:640px){.row{flex-direction:column}.col{flex:1 1 auto}} */
+
+.swal2-popup {
+	border-radius: 32px !important;
+}
+
+.confirm-btn {
+	padding: 16px 32px;
+	color: #FFFFFF;
+	background-color: #000000;
+	border-radius: 32px !important;
+	cursor: pointer;
+}
+
+.text-label {
+	color: #000000;
+	font-size: 32px;
+	font-weight: 700;
+}
