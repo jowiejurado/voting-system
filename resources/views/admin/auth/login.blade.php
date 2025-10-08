@@ -82,13 +82,13 @@
 @endsection
 
 @push('scripts')
-<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+{{-- <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script> --}}
 <script>
   // ReCAPTCHA
-  grecaptcha.ready(function(){
-    grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {action: 'admin_login'})
-      .then(token => document.getElementById('g-recaptcha-response').value = token);
-  });
+  // grecaptcha.ready(function(){
+  //   grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {action: 'admin_login'})
+  //     .then(token => document.getElementById('g-recaptcha-response').value = token);
+  // });
 
   // Wait 5s after all assets (incl. logo) are loaded, then run the animation.
   window.addEventListener('load', () => {
