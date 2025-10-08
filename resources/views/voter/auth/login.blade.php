@@ -1,31 +1,103 @@
-@php($title = 'Voter Login')
-<x-layouts.app :title="$title">
-	<x-slot:nav>
-		<a href="{{ route('voter.login') }}">Voter</a>
-	</x-slot:nav>
-	<div class="card" style="max-width:420px;margin:24px auto;">
-		<form method="post" action="{{ route('voter.login.submit') }}">
-			@csrf
-			<label class="label">Member ID</label>
-			<input class="input" type="text" name="member_id" required>
-			<label class="label">Password</label>
-			<input class="input" type="password" name="password" required>
-			<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
-			<div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-				<button class="btn" type="submit">Login</button>
-			</div>
-		</form>
+@php($title = 'Voter - Log In | Voting System')
+@extends('layouts.voter-auth')
+
+@section('content')
+<style>
+  #auth-anim{
+    --panelW: 520px;
+    --gap: 0px;
+    max-width: 1100px;
+    width: 100%;
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap);
+    transition: gap .6s ease;
+  }
+  #auth-anim.show-form{ --gap: 120px; }
+
+  #auth-anim .logo{
+    transform: translateX(calc((var(--panelW) + var(--gap)) / 2));
+    transition: transform .7s cubic-bezier(.22,.61,.36,1);
+    will-change: transform;
+  }
+
+  #auth-anim.show-form .logo{
+    transform: translateX(0);
+  }
+
+  #auth-anim .panel{
+    width: var(--panelW);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .55s ease;
+    will-change: opacity;
+    pointer-events: none;
+  }
+  #auth-anim.show-form .panel{
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  @media (max-width: 767px){
+    #auth-anim{
+      flex-direction: column;
+      --gap: 24px;
+    }
+    #auth-anim .logo{ transform: none; }
+    #auth-anim .panel{ width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #auth-anim, #auth-anim .logo, #auth-anim .panel{ transition: none !important; }
+  }
+</style>
+
+<div id="auth-anim">
+  <img
+    src="{{ asset('logo.png') }}"
+    alt="Logo"
+    width="350"
+    height="350"
+    class="logo bg-white rounded-full p-0 m-0"
+  />
+	<div class="panel flex flex-col justify-center items-center">
+		<h1 class="text-2xl uppercase text-black font-black text-center mb-8">PASEI SECURED ONLINE VOTING SYSTEM</h1>
+
+		<div class="bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] w-full md:w-auto">
+			<form method="post" action="{{ route('voter.login.submit') }}" class="flex flex-col items-center gap-[24px]">
+				@csrf
+				<h4 class="text-lg text-black font-bold">1st Step Verification - Log in</h4>
+				<input type="text" id="memberId" name="memberId" required placeholder="MEMBER ID"
+							 class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
+				<input type="password" id="password" name="password" required placeholder="PASSWORD"
+							 class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
+				<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+				<button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">
+					Proceed
+				</button>
+			</form>
+		</div>
 	</div>
-	@push('scripts')
-	<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
-	<script>
-	grecaptcha.ready(function(){
-		grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {action: 'voter_login'}).then(function(token){
-			document.getElementById('g-recaptcha-response').value = token;
-		});
-	});
-	</script>
-	@endpush
-</x-layouts.app>
+</div>
+@endsection
 
+@push('scripts')
+<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
+<script>
+  // ReCAPTCHA
+  grecaptcha.ready(function(){
+    grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {action: 'voter_login'})
+      .then(token => document.getElementById('g-recaptcha-response').value = token);
+  });
 
+  // Wait 5s after all assets (incl. logo) are loaded, then run the animation.
+  window.addEventListener('load', () => {
+    const wrap = document.getElementById('auth-anim');
+    const SHOW_AFTER_MS = 2500; // 5 seconds
+    setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
+  });
+</script>
+@endpush

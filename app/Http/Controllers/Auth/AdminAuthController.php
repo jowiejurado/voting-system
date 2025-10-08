@@ -92,22 +92,4 @@ class AdminAuthController extends Controller
 		$request->session()->regenerateToken();
 		return redirect()->route('admin.login');
 	}
-
-	public function resendOtp()
-	{
-		session(['otp_verified' => false]);
-		$otp = $this->otpService->sendOTP(Auth::user());
-
-		if ($otp) {
-			return redirect()->route('admin.otp')->with([
-				'success' => 'Resend OTP Successfully',
-				'buttonText' => 'Proceed'
-			]);
-		}
-
-		return back()->with([
-			'error' => 'Something went wrong',
-			'buttonText' => 'TRY AGAIN',
-		]);
-	}
 }

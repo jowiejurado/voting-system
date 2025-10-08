@@ -50,7 +50,7 @@
 
 	<main
 		class="min-h-screen flex items-center"
-    style="background-image:url('{{ asset('images/bg-image.jpg') }}'); background-size:cover; background-position:center;">
+    style="background-image:url('{{ asset('images/bg-image-1.jpg') }}'); background-size:cover; background-position:center;">
     @yield('content')
   </main>
 

@@ -41,14 +41,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('voter')->name('voter.')->group(function () {
 	Route::get('login', [VoterAuthController::class, 'showLogin'])->name('login');
 	Route::post('login', [VoterAuthController::class, 'login'])->name('login.submit');
-	// Route::post('resend-otp', [VoterAuthController::class, 'resendOtp'])->name('otp');
+
 	Route::get('otp', [VoterAuthController::class, 'showOtp'])->name('otp');
 	Route::post('otp', [VoterAuthController::class, 'verifyOtp'])->name('otp.verify');
-	Route::get('face', [VoterAuthController::class, 'showFace'])->name('face');
-	Route::post('face', [VoterAuthController::class, 'verifyFace'])->name('face.verify');
+
 	Route::post('logout', [VoterAuthController::class, 'logout'])->name('logout');
 
 	Route::middleware(['voter', 'otp', 'face'])->group(function () {
+		Route::view('scan', 'qr.scan')->name('qr.scan');
+
 		Route::get('dashboard', [BallotController::class, 'dashboard'])->name('dashboard');
 		Route::middleware('active.election')->group(function () {
 			Route::get('ballot', [BallotController::class, 'show'])->name('ballot');

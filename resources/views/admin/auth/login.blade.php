@@ -64,7 +64,7 @@
     class="logo bg-white rounded-full p-0 m-0"
   />
 
-  <div class="panel bg-white p-[32px] rounded-4xl max-w-[500px] w-full md:w-auto">
+  <div class="panel bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] w-full md:w-auto">
     <form method="post" action="{{ route('admin.login.submit') }}" class="flex flex-col items-center gap-[24px]">
       @csrf
       <h4 class="text-lg text-black font-bold">Admin 1st Step Authentication - Log in</h4>
