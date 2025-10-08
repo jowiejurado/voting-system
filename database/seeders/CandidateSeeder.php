@@ -18,16 +18,7 @@ class CandidateSeeder extends Seeder
 		$candidatesPerPosition = 1;
 		$organizations = ['IT', 'HR', 'Marketing'];
 
-		$positionNames = [
-			'Chairperson',
-			'President',
-			'Vice President',
-			'Corporate Secretary',
-			'Treasurer',
-			'Assistant Treasurer',
-			'Directors',
-			'Auditor',
-		];
+		$positionNames = Position::pluck('name');
 
 		$positionIds = Position::whereIn('name', $positionNames)
 			->pluck('id', 'name');

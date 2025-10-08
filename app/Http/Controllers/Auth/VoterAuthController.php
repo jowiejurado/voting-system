@@ -35,7 +35,7 @@ class VoterAuthController extends Controller
         }
         $request->session()->regenerate();
         session(['otp_verified' => false, 'face_verified' => false]);
-        $this->otpService->generateAndSend(Auth::user(), 'login');
+        $this->otpService->sendOTP(Auth::user());
         return redirect()->route('voter.otp')->with('success', 'OTP sent');
     }
 

@@ -7,19 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class OtpCode extends Model
 {
-    use HasFactory;
+	use HasFactory;
 
-    protected $fillable = [
-        'user_id', 'phone', 'purpose', 'code', 'expires_at', 'used',
-    ];
+	protected $fillable = [
+		'user_id',
+		'phone_number',
+		'code',
+		'expires_at',
+		'used',
+	];
 
-    protected $casts = [
-        'expires_at' => 'datetime',
-        'used' => 'boolean',
-    ];
+	protected $casts = [
+		'expires_at' => 'datetime',
+		'used' => 'boolean',
+	];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+	public function user()
+	{
+		return $this->belongsTo(User::class);
+	}
 }

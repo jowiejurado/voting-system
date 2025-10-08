@@ -10,57 +10,104 @@ use Illuminate\Http\Request;
 
 class CandidateController extends Controller
 {
-    public function index()
-    {
-        $election = Election::first();
-        $candidates = Candidate::with('position')
-            ->when($election, fn($q)=>$q->where('election_id', $election->id))
-            ->orderBy('id','desc')
-            ->get();
-        return view('admin.candidates.index', compact('candidates','election'));
-    }
+	public function index(Request $request)
+	{
+		$positions = Position::pluck('name', 'id');
+		$elections = Election::pluck('title', 'id');
+		$q = trim($request->get('q', ''));
+		$perPage = (int) $request->get('per_page', 10);
+		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
-    public function create()
-    {
-        $elections = Election::orderBy('id','desc')->get();
-        $positions = Position::orderBy('order_index')->get();
-        return view('admin.candidates.create', compact('elections','positions'));
-    }
+		$candidates = \App\Models\Candidate::query()
+			->when($q !== '', function ($query) use ($q) {
+				$query->where(function ($sub) use ($q) {
+					$sub->where('last_name', 'like', "%{$q}%");
+					$sub->orWhere('first_name', 'like', "%{$q}%");
+					$sub->orWhere('organization_name', 'like', "%{$q}%");
+				});
+			})
+			->latest()
+			->paginate($perPage)
+			->withQueryString();
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'election_id' => 'required|exists:elections,id',
-            'position_id' => 'required|exists:positions,id',
-            'name' => 'required|string|max:255',
-            'party' => 'nullable|string|max:255',
-        ]);
-        Candidate::create($data);
-        return redirect()->route('admin.candidates.index')->with('success', 'Candidate created');
-    }
+		return view('admin.candidates.index', compact('candidates', 'q', 'perPage', 'positions', 'elections'));
+	}
 
-    public function edit(Candidate $candidate)
-    {
-        $elections = Election::orderBy('id','desc')->get();
-        $positions = Position::orderBy('order_index')->get();
-        return view('admin.candidates.edit', compact('candidate','elections','positions'));
-    }
+	public function store(Request $request)
+	{
+		$data = $request->validate([
+			'election'						=> 'required',
+			'position'						=> 'required',
+			'last_name'           => 'required|string|max:255',
+			'first_name'  				=> 'required|string|max:255',
+			'organization_name'  	=> 'required|string|max:255',
+			'admin_id'       			=> 'required|string',
+			'password'       			=> 'required|string',
+		]);
 
-    public function update(Request $request, Candidate $candidate)
-    {
-        $data = $request->validate([
-            'election_id' => 'required|exists:elections,id',
-            'position_id' => 'required|exists:positions,id',
-            'name' => 'required|string|max:255',
-            'party' => 'nullable|string|max:255',
-        ]);
-        $candidate->update($data);
-        return redirect()->route('admin.candidates.index')->with('success', 'Candidate updated');
-    }
+		assert_current_user_is_admin();
+    assert_admin_credentials($data['admin_id'], $data['password']);
 
-    public function destroy(Candidate $candidate)
-    {
-        $candidate->delete();
-        return back()->with('success', 'Candidate deleted');
-    }
+		Candidate::create([
+			'election_id'					=> $data['election'],
+			'position_id'					=> $data['position'],
+			'last_name'           => $data['last_name'],
+			'first_name'  				=> $data['first_name'],
+			'organization_name'  	=> $data['organization_name'],
+		]);
+
+		return redirect()->route('admin.candidates.index')
+			->with([
+				'success' => 'Successfully Submitted',
+				'buttonText' => 'Proceed'
+			]);
+	}
+
+	public function update(Request $request, Candidate $candidate)
+	{
+		$data = $request->validate([
+			'election'						=> 'required',
+			'position'						=> 'required',
+			'last_name'           => 'required|string|max:255',
+			'first_name'  				=> 'required|string|max:255',
+			'organization_name'  	=> 'required|string|max:255',
+			'admin_id'       			=> 'required|string',
+			'password'       			=> 'required|string',
+		]);
+
+		assert_current_user_is_admin();
+    assert_admin_credentials($data['admin_id'], $data['password']);
+
+		$candidate->update([
+			'election_id'					=> $data['election'],
+			'position_id'					=> $data['position'],
+			'last_name'           => $data['last_name'],
+			'first_name'  				=> $data['first_name'],
+			'organization_name'  	=> $data['organization_name'],
+		]);
+
+		return redirect()->route('admin.candidates.index')
+			->with([
+				'success' => 'Successfully Submitted',
+				'buttonText' => 'Proceed'
+			]);
+	}
+
+	public function destroy(Request $request, Candidate $candidate)
+	{
+		$request->validate([
+			'admin_id' => 'required|string',
+			'password' => 'required|string',
+		]);
+
+		assert_current_user_is_admin();
+    assert_admin_credentials($request->input('admin_id'), $request->input('password'));
+
+		$candidate->delete();
+
+		return back()->with([
+			'success' => 'Removed Successfully',
+			'buttonText' => 'Proceed'
+		]);
+	}
 }

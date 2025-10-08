@@ -3,30 +3,54 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Election;
-use App\Models\Position;
-use App\Models\Vote;
 use Illuminate\Http\Request;
 
 class VoteController extends Controller
 {
-    public function index()
-    {
-        $election = Election::first();
-        $positions = Position::when($election, fn($q)=>$q->where('election_id', $election->id))
-            ->orderBy('order_index')->get();
-        $tally = [];
-        foreach ($positions as $p) {
-            $tally[$p->name] = Vote::where('position_id', $p->id)->count();
-        }
-        return view('admin.votes.index', compact('positions','tally','election'));
-    }
+	public function index(Request $request)
+	{
+		$q 				= trim($request->get('q', ''));
+		$perPage 	= (int) $request->get('per_page', 10);
+		$perPage 	= $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
-    public function ballot()
-    {
-        $election = Election::first();
-        $positions = Position::with('candidates')->when($election, fn($q)=>$q->where('election_id', $election->id))
-            ->orderBy('order_index')->get();
-        return view('admin.votes.ballot', compact('positions','election'));
-    }
+		$votes = \App\Models\Vote::query()
+			->with([
+				'position',
+				'candidate',
+				'election'
+			])
+			->latest()
+			->paginate($perPage)
+			->withQueryString();
+
+		return view('admin.votes.index', compact('votes', 'q', 'perPage'));
+	}
+
+	public function voterStatus(Request $request)
+	{
+		$q       = trim($request->get('q', ''));
+		$perPage = (int) $request->get('per_page', 9);
+		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 9;
+
+		$sort = $request->get('sort', '');
+		$orderForHasVoted = $sort === 'voted' ? 'desc' : 'asc';
+
+		$voters = \App\Models\User::query()
+			->where('type', 'voter')
+			->when($q !== '', function ($query) use ($q) {
+				$query->where(function ($sub) use ($q) {
+					$sub->where('first_name', 'like', "%{$q}%")
+						->orWhere('last_name', 'like', "%{$q}%")
+						->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$q}%"])
+						->orWhere('organization_name', 'like', "%{$q}%")
+						->orWhere('email', 'like', "%{$q}%");
+				});
+			})
+			->orderBy('has_voted', $orderForHasVoted)
+			->orderByDesc('created_at')
+			->simplePaginate($perPage)
+			->withQueryString();
+
+		return view('admin.voter-status.index', compact('voters', 'q', 'perPage', 'sort'));
+	}
 }

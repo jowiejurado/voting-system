@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{ $title ?? 'Voting System' }}</title>
 
-	@vite(['resources/css/app.css', 'resources/js/app.js'])
+	@vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/modal.js'])
 
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,8 +55,16 @@
 		</div>
 
 		<div class="flex items-center gap-3">
-			<div class="h-9 w-9 rounded-full bg-[#6c6f74] grid place-items-center">
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+			@php
+				$fullname = Auth::user()->first_name . ' ' . Auth::user()->last_name;
+				$position = ucwords(str_replace(['-','_'], ' ', Auth::user()->type));
+			@endphp
+			<div class="flex flex-col items-center text-center text-xs font-semibold">
+				{{ $fullname }}
+				<p>({{ $position }})</p>
+			</div>
+			<div class="h-9 w-9 rounded-full bg-[#6c6f74] flex items-center border-2 border-white">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-white" viewBox="0 0 24 24" fill="currentColor">
 					<path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5Z"/>
 				</svg>
 			</div>
@@ -87,8 +95,8 @@
 				</ul>
 				<p class="px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-[#9f9f9f] bg-[#403f3b] border-2 border-[#373737]">Manage</p>
 				<ul>
-					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.voters.index') ? 'bg-[#d0352f]' : '' }}">
-						<a href="{{ route('admin.voters.index') ?? '#' }}" class="flex items-center gap-3">
+					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.voter-status.index') ? 'bg-[#d0352f]' : '' }}">
+						<a href="{{ route('admin.voter-status.index') ?? '#' }}" class="flex items-center gap-3">
 							<span class="inline-grid place-items-center w-7 h-auto">
 								<img src={{ asset('icons/voters.png') }} alt="dashboard" width="50" height="50" />
 							</span>
@@ -122,20 +130,39 @@
 				</ul>
 				<p class="px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-[#9f9f9f] bg-[#403f3b] border-2 border-[#373737]">Settings</p>
 				<ul>
-					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.voters.index') ? 'bg-[#d0352f]' : '' }}">
-						<a href="{{ route('admin.voters.index') ?? '#' }}" class="flex items-center gap-3">
+					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.index') ? 'bg-[#d0352f]' : '' }}">
+						<a href="{{ route('admin.index') ?? '#' }}" class="flex items-center gap-3">
 							<span class="inline-grid place-items-center w-7 h-auto">
 								<img src={{ asset('icons/admin.png') }} alt="dashboard" width="50" height="50" />
 							</span>
 							Admin
 						</a>
 					</li>
-					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.voters.index') ? 'bg-[#d0352f]' : '' }}">
-						<a href="{{ route('admin.voters.index') ?? '#' }}" class="flex items-center gap-3">
+					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.elections.index') ? 'bg-[#d0352f]' : '' }}">
+						<a href="{{ route('admin.elections.index') ?? '#' }}" class="flex items-center gap-3">
 							<span class="inline-grid place-items-center w-7 h-auto">
 								<img src={{ asset('icons/election.png') }} alt="dashboard" width="50" height="50" />
 							</span>
 							Upcoming Election
+						</a>
+					</li>
+					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.archives.index') ? 'bg-[#d0352f]' : '' }}">
+						<a href="{{ route('admin.archives.index') ?? '#' }}" class="flex items-center gap-3">
+							<span class="inline-grid place-items-center w-7 h-auto">
+								<img src={{ asset('icons/archives.png') }} alt="dashboard" width="50" height="50" />
+							</span>
+							Archives
+						</a>
+					</li>
+				</ul>
+				<p class="px-4 py-4 text-xs font-extrabold uppercase tracking-wider text-[#9f9f9f] bg-[#403f3b] border-2 border-[#373737]"></p>
+				<ul>
+					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.logout') ? 'bg-[#d0352f]' : '' }}">
+						<a href="{{ route('admin.logout') ?? '#' }}" class="flex items-center gap-3">
+							<span class="inline-grid place-items-center w-7 h-auto">
+								<img src={{ asset('icons/admin.png') }} alt="dashboard" width="50" height="50" />
+							</span>
+							Log out
 						</a>
 					</li>
 				</ul>

@@ -41,9 +41,13 @@ class AdminAuthController extends Controller
 			]);
 		}
 
+
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
-		// $this->otpService->generateAndSend(Auth::user(), 'login');
+		$this->otpService->sendOTP(Auth::user(), 'login');
+
+		$user = $request->user();
+		$user->forceFill(['last_signed_in' => now('Asia/Manila')])->save();
 
 		return redirect()->route('admin.otp')->with([
 			'success' => 'Valid Details',
@@ -64,23 +68,46 @@ class AdminAuthController extends Controller
 
 		$user = Auth::user();
 
-		// if ($user && $this->otpService->verify($user, $request->code, 'login')) {
-		if ($user) {
+		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
+		// if ($user) {
 			session(['otp_verified' => true]);
-			return redirect()->route('admin.dashboard');
+			return redirect()->route('admin.dashboard')->with([
+				'success' => 'Code Confirmed',
+				'buttonText' => 'Proceed'
+			]);
 		}
 
 		return back()->with([
-			'error' => 'Invalid code',
+			'error' => 'Invalid Code',
 			'buttonText' => 'TRY AGAIN',
 		]);
 	}
 
 	public function logout(Request $request)
 	{
+		$user = $request->user();
+		$user->forceFill(['last_signed_out' => now('Asia/Manila')])->save();
 		Auth::logout();
 		$request->session()->invalidate();
 		$request->session()->regenerateToken();
 		return redirect()->route('admin.login');
+	}
+
+	public function resendOtp()
+	{
+		session(['otp_verified' => false]);
+		$otp = $this->otpService->sendOTP(Auth::user());
+
+		if ($otp) {
+			return redirect()->route('admin.otp')->with([
+				'success' => 'Resend OTP Successfully',
+				'buttonText' => 'Proceed'
+			]);
+		}
+
+		return back()->with([
+			'error' => 'Something went wrong',
+			'buttonText' => 'TRY AGAIN',
+		]);
 	}
 }

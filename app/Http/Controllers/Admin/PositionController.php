@@ -3,19 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Election;
 use App\Models\Position;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class PositionController extends Controller
 {
-	public function index()
+	public function index(Request $request)
 	{
-		$positions = Position::orderBy('id')->get();
-		return view('admin.positions.index', compact('positions'));
+		$q = trim($request->get('q', ''));
+		$perPage = (int) $request->get('per_page', 10);
+		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
+
+		$positions = \App\Models\Position::query()
+			->when($q !== '', function ($query) use ($q) {
+				$query->where(function ($sub) use ($q) {
+					$sub->where('name', 'like', "%{$q}%");
+					if (is_numeric($q)) $sub->orWhere('maximum_votes', (int) $q);
+				});
+			})
+			->latest()
+			->paginate($perPage)
+			->withQueryString();
+
+		return view('admin.positions.index', compact('positions', 'q', 'perPage'));
 	}
 
 	public function store(Request $request)
@@ -27,8 +37,8 @@ class PositionController extends Controller
 			'password'       => 'required|string',
 		]);
 
-		$this->assertCurrentUserIsAdmin();
-		$this->assertAdminCredentials($data['admin_id'], $data['password']);
+		assert_current_user_is_admin();
+    assert_admin_credentials($data['admin_id'], $data['password']);
 
 		Position::create([
 			'name'           => $data['name'],
@@ -51,8 +61,8 @@ class PositionController extends Controller
 			'password'       => 'required|string',
 		]);
 
-		$this->assertCurrentUserIsAdmin();
-		$this->assertAdminCredentials($data['admin_id'], $data['password']);
+		assert_current_user_is_admin();
+    assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$position->update([
 			'name'           => $data['name'],
@@ -71,42 +81,16 @@ class PositionController extends Controller
 		$request->validate([
 			'admin_id' => 'required|string',
 			'password' => 'required|string',
-    ]);
+		]);
 
-		$this->assertCurrentUserIsAdmin();
-    $this->assertAdminCredentials($request->admin_id, $request->password);
+		assert_current_user_is_admin();
+    assert_admin_credentials($request->input('admin_id'), $request->input('password'));
 
 		$position->delete();
 
 		return back()->with([
-			'success' => 'Deleted',
+			'success' => 'Removed Successfully',
 			'buttonText' => 'Proceed'
 		]);
-	}
-
-	private function assertCurrentUserIsAdmin(): void
-	{
-		if (!Auth::check() || !in_array(strtolower(Auth::user()->type), ['admin', 'system-admin'], true)) {
-			abort(403, 'Unauthorized');
-		}
-	}
-
-	private function assertAdminCredentials(string $adminId, string $password): void
-	{
-		$user = User::where('admin_id', $adminId)->first();
-
-		if (!$user || !Hash::check($password, $user->password)) {
-			back()
-				->withErrors(['admin_id' => 'Invalid admin credentials', 'password' => ' '])
-				->withInput(request()->except('password'))
-				->throwResponse();
-		}
-
-		if (!in_array(strtolower($user->type), ['admin', 'system-admin'], true)) {
-			back()
-				->withErrors(['admin_id' => 'Only admin or system-admin may perform this action'])
-				->withInput(request()->except('password'))
-				->throwResponse();
-		}
 	}
 }

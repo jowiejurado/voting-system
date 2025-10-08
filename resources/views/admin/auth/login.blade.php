@@ -1,4 +1,4 @@
-@php($title = 'Voting System | Admin - Log In')
+@php($title = 'Admin - Log In | Voting System')
 @extends('layouts.auth')
 
 @section('content')
@@ -90,10 +90,11 @@
       .then(token => document.getElementById('g-recaptcha-response').value = token);
   });
 
-  // Reveal: form fades in (opacity only). Logo slides left via transform.
-  document.addEventListener('DOMContentLoaded', () => {
+  // Wait 5s after all assets (incl. logo) are loaded, then run the animation.
+  window.addEventListener('load', () => {
     const wrap = document.getElementById('auth-anim');
-    setTimeout(() => wrap.classList.add('show-form'), 350);
+    const SHOW_AFTER_MS = 2500; // 5 seconds
+    setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
   });
 </script>
 @endpush

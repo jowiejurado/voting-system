@@ -16,9 +16,9 @@ class ElectionSeeder extends Seeder
 		Election::firstOrCreate([
 			'title' 			=> 'PASEI Officers & Board of Directors 2025 - 2026',
 		], [
-			'date' 				=> Carbon::parse('2025-10-03'),
-			'start_time' 	=> now()->format('h:i:s'),
-			'end_time'		=> now()->addHours(8)->format('h:i:s'),
+			'date' 				=> Carbon::parse('2025-10-03')->format('Y-m-d'),
+			'start_time' 	=> now()->format('H:i:s'),
+			'end_time'		=> now()->addHours(8)->format('H:i:s'),
 			'is_active' 	=> true
 		]);
 	}

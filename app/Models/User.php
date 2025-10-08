@@ -26,7 +26,10 @@ class User extends Authenticatable
 		'phone_number',
 		'organization_name',
 		'type',
-		'has_voted'
+		'has_voted',
+		'is_active',
+		'last_signed_in',
+		'last_signed_out'
 	];
 
 	/**
@@ -49,6 +52,9 @@ class User extends Authenticatable
 		return [
 			'password' => 'hashed',
 			'has_voted' => 'boolean',
+			'is_active' => 'boolean',
+			'last_signed_in' => 'datetime',
+    	'last_signed_out' => 'datetime',
 		];
 	}
 

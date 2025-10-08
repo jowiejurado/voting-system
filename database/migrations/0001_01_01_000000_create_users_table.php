@@ -22,6 +22,9 @@ return new class extends Migration
 			$table->string('organization_name')->nullable();
 			$table->enum('type', ['voter', 'admin', 'system-admin'])->default('voter');
 			$table->boolean('has_voted')->default(false);
+			$table->boolean('is_active')->default(true);
+			$table->datetime('last_signed_in')->nullable();
+			$table->datetime('last_signed_out')->nullable();
 			$table->rememberToken();
 			$table->timestamps();
 		});

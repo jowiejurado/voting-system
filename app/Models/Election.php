@@ -18,7 +18,6 @@ class Election extends Model
 	];
 
 	protected $casts = [
-		'date' => 'date',
 		'is_active' => 'boolean',
 	];
 

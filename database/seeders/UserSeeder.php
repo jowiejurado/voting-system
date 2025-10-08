@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
 			'last_name'			=> 'Admin',
 			'first_name'		=> 'Pasei System',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '+639426735530',
+			'phone_number'	=> '09426735530',
 			'type' 					=> UserType::SYSTEM_ADMIN->value,
 		]);
 
@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
 			'last_name'			=> 'Admin',
 			'first_name'		=> 'Pasei',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '+639426735530',
+			'phone_number'	=> '09426735530',
 			'type' 					=> UserType::ADMIN->value,
 		]);
 
@@ -38,15 +38,23 @@ class UserSeeder extends Seeder
 			'last_name'			=> 'Dela Cruz',
 			'first_name'		=> 'Juan',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '+639426332392',
+			'phone_number'	=> '09426332392',
 			'type' 					=> UserType::VOTER->value,
 		]);
 
 		User::firstOrCreate(['member_id' => '202510010004'], [
+			'last_name'			=> 'Reyes',
+			'first_name'		=> 'Maria',
+			'password'			=> Hash::make('P@ssw0rd!@#'),
+			'phone_number'	=> '09426332392',
+			'type' 					=> UserType::VOTER->value,
+		]);
+
+		User::firstOrCreate(['member_id' => '202510010005'], [
 			'last_name'			=> 'Santos',
 			'first_name'		=> 'Pedro',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '+639761508455',
+			'phone_number'	=> '09761508455',
 			'type' 					=> UserType::VOTER->value,
 		]);
 	}
