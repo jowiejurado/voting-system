@@ -24,7 +24,7 @@ class AdminAuthController extends Controller
 		$request->validate([
 			'adminId' => 'required',
 			'password' => 'required',
-			'g-recaptcha-response' => 'nullable|string',
+			// 'g-recaptcha-response' => 'nullable|string',
 		]);
 
 		// if (!$this->recaptcha->verify((string) $request->input('g-recaptcha-response', ''), 'admin_login')) {
@@ -36,11 +36,10 @@ class AdminAuthController extends Controller
 
 		if (!Auth::attempt(['admin_id' => $request->adminId, 'password' => $request->password])) {
 			return back()->with([
-				'error' => 'Invalid details',
+				'error' => 'Invalid detailsx',
 				'buttonText' => 'TRY AGAIN',
 			]);
 		}
-
 
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
