@@ -5,27 +5,30 @@
 @section('content')
 <div class="w-full">
   <div class="mx-auto max-w-4xl w-full px-6 py-12">
-    <div class="rounded-3xl bg-white/80 backdrop-blur-sm shadow-2xl ring-1 ring-black/5">
-      <div class="px-8 pt-10 pb-6 text-center">
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-          Welcome to PASEI Secured Online Voting System
-        </h1>
-        <p class="mt-3 text-slate-700">
-          Choose a panel to continue.
-        </p>
+    <div class="rounded-3xl bg-white backdrop-blur-sm shadow-2xl ring-1 ring-black/5">
+      <div class="px-8 pt-10 pb-6 text-center flex flex-col items-center gap-6">
+				<img src="{{ asset('logo.png') }}" alt="logo" width="200" height="200" />
+				<div>
+					<h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+						Welcome to PASEI Secured Online Voting System
+					</h1>
+					<p class="mt-3 text-slate-700">
+						Choose a panel to continue.
+					</p>
+				</div>
       </div>
 
       <div class="px-8 pb-10">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <a
             href="{{ route('admin.login') }}"
-            class="group relative block rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 shadow-sm hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            class="group relative block rounded-2xl border border-slate-200 bg-white hover:border-red-300 shadow-sm hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label="Admin Login"
           >
             <div class="p-6">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600/10 text-indigo-700">
+                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-600/10 text-red-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.75a3 3 0 00-3 3v1.5h6v-1.5a3 3 0 00-3-3z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 11.25h10.5v5.25a3 3 0 01-3 3h-4.5a3 3 0 01-3-3v-5.25z" />
