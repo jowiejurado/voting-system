@@ -24,6 +24,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 	Route::post('otp', [AdminAuthController::class, 'verifyOtp'])->name('otp.verify');
 	Route::get('logout', [AdminAuthController::class, 'logout'])->name('logout');
 
+	Route::post('send-otp', [AdminAuthController::class, 'sendOtp'])->name('send-otp');
+	Route::match(['post', 'put'], 'change-password', [AdminAuthController::class, 'changePassword'])->name('change-password');
+
 	Route::middleware(['admin'])->group(function () {
 		Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 

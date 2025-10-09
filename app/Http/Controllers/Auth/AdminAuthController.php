@@ -91,4 +91,57 @@ class AdminAuthController extends Controller
 		$request->session()->regenerateToken();
 		return redirect()->route('admin.login');
 	}
+
+	public function sendOtp(Request $request)
+	{
+		$user = Auth::user();
+
+		if (!$user) {
+			return back()->with([
+				'error' => 'Failed to send OTP',
+				'buttonText' => 'TRY AGAIN',
+			]);
+		}
+
+		$this->otpService->sendOTP($user);
+
+		return back()->with([
+			'success' => 'OTP has been sent',
+			'buttonText' => 'Proceed'
+		]);
+	}
+
+	public function changePassword(Request $request)
+	{
+		$request->validate([
+			'current_password' => 'required',
+			'password'         => 'required',
+      'otp'              => 'required|digits:6',
+    ]);
+
+    $user = $request->user();
+
+    if (!Hash::check($request->current_password, $user->password)) {
+			return back()->with([
+				'error' => 'Invalid Details',
+				'buttonText' => 'TRY AGAIN',
+				'__action' => 'change-password'
+			]);
+    }
+
+    if (!$this->otpService->verifyOtp($user, $request->otp)) {
+			return back()->with([
+				'error' => 'Invalid Code',
+				'buttonText' => 'TRY AGAIN',
+				'__action' => 'change-password'
+			]);
+    }
+
+    $user->forceFill(['password' => Hash::make($request->password)])->save();
+
+		return redirect()->route('admin.dashboard')->with([
+			'success' => 'Password updated',
+			'buttonText' => 'Proceed'
+		]);
+	}
 }
