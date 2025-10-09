@@ -36,7 +36,7 @@ class AdminAuthController extends Controller
 
 		if (!Auth::attempt(['admin_id' => $request->adminId, 'password' => $request->password])) {
 			return back()->with([
-				'error' => 'Invalid detailsx',
+				'error' => 'Invalid details',
 				'buttonText' => 'TRY AGAIN',
 			]);
 		}

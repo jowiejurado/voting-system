@@ -11,7 +11,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="min-h-screen m-0">
+<body class="min-h-screen m-0 font-[Inter] antialiased">
 	@if(session('error'))
 		<script>
 			Swal.fire({
