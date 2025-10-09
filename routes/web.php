@@ -51,8 +51,6 @@ Route::prefix('voter')->name('voter.')->group(function () {
 	Route::post('logout', [VoterAuthController::class, 'logout'])->name('logout');
 
 	Route::middleware(['voter', 'otp', 'face'])->group(function () {
-		Route::view('scan', 'qr.scan')->name('qr.scan');
-
 		Route::get('dashboard', [BallotController::class, 'dashboard'])->name('dashboard');
 		Route::middleware('active.election')->group(function () {
 			Route::get('ballot', [BallotController::class, 'show'])->name('ballot');

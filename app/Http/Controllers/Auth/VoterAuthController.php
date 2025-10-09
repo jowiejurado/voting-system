@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\QrToken;
-use App\Models\User;
 use App\Services\OtpService;
 use App\Services\RecaptchaService;
 use Illuminate\Http\Request;
@@ -68,7 +66,7 @@ class VoterAuthController extends Controller
 		// if ($user && $this->otpService->verifyOtp($user, $request->code)) {
 		if ($user) {
 			session(['otp_verified' => true]);
-			return redirect()->route('voter.qr')->with([
+			return redirect()->route('voter.dashboard')->with([
 				'success' => 'Code Confirmed',
 				'buttonText' => 'Proceed'
 			]);
