@@ -22,8 +22,8 @@ class OtpService
 
 			$expires   = now('Asia/Manila')->addMinutes(5);
 			$code      = (string) random_int(100000, 999999);   // safer than rand()
-			$message   = 'PASEI - Secured Online Voting System: Your one-time passcode is ' . $code . '. Valid in 5 minutes. Please do not share this code to anyone. If you didn`t request this, please ignore this message.';
-			// $message   = 'PASEI - Secured Online Voting System: Your one-time passcode is ' . $code;
+			// $message   = 'PASEI - Secured Online Voting System: Your one-time passcode is ' . $code . '. Valid in 5 minutes. Please do not share this code to anyone. If you didn`t request this, please ignore this message.';
+			$message   = 'PASEI - Secured Online Voting System: Your one-time passcode is ' . $code;
 
 			$postQuery = 'https://sms.iprogtech.com/api/v1/sms_messages?api_token='. $apiKey .'&message='. $message .'&phone_number=' . $user->phone_number . '&sms_provider=2';
 

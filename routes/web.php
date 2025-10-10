@@ -50,15 +50,12 @@ Route::prefix('voter')->name('voter.')->group(function () {
 
 	Route::post('logout', [VoterAuthController::class, 'logout'])->name('logout');
 
-	Route::middleware(['voter', 'otp', 'face'])->group(function () {
-		Route::get('dashboard', [BallotController::class, 'dashboard'])->name('dashboard');
-		Route::middleware('active.election')->group(function () {
-			Route::get('ballot', [BallotController::class, 'show'])->name('ballot');
-			Route::post('ballot/step', [BallotController::class, 'step'])->name('ballot.step');
-			Route::post('ballot/submit', [BallotController::class, 'submit'])->name('ballot.submit');
-		});
-		Route::get('account', [AccountController::class, 'show'])->name('account');
-		Route::post('account/password', [AccountController::class, 'updatePassword'])->name('account.password');
-		Route::post('account/otp', [AccountController::class, 'sendOtp'])->name('account.otp');
+	Route::post('send-otp', [VoterAuthController::class, 'sendOtp'])->name('send-otp');
+	Route::match(['post', 'put'], 'change-password', [VoterAuthController::class, 'changePassword'])->name('change-password');
+
+	Route::middleware(['voter'])->group(function () {
+		Route::get('ballot', [BallotController::class, 'showBallot'])->name('ballot');
+		Route::post('ballot/submit', [BallotController::class, 'submit'])->name('ballot.submit');
+
 	});
 });

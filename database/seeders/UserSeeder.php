@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\UserType;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -38,7 +37,7 @@ class UserSeeder extends Seeder
 			'last_name'			=> 'Dela Cruz',
 			'first_name'		=> 'Juan',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '09426332392',
+			'phone_number'	=> '09426735530',
 			'type' 					=> UserType::VOTER->value,
 		]);
 
@@ -46,7 +45,7 @@ class UserSeeder extends Seeder
 			'last_name'			=> 'Reyes',
 			'first_name'		=> 'Maria',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '09426332392',
+			'phone_number'	=> '09426735530',
 			'type' 					=> UserType::VOTER->value,
 		]);
 
@@ -54,7 +53,7 @@ class UserSeeder extends Seeder
 			'last_name'			=> 'Santos',
 			'first_name'		=> 'Pedro',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '09761508455',
+			'phone_number'	=> '09426735530',
 			'type' 					=> UserType::VOTER->value,
 		]);
 	}

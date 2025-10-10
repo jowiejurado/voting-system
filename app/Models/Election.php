@@ -21,11 +21,6 @@ class Election extends Model
 		'is_active' => 'boolean',
 	];
 
-	public function positions()
-	{
-		return $this->hasMany(Position::class);
-	}
-
 	public function candidates()
 	{
 		return $this->hasMany(Candidate::class);
