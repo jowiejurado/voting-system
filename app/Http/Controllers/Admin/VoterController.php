@@ -40,7 +40,6 @@ class VoterController extends Controller
 			'last_name'           => 'required|string|max:255',
 			'organization_name'   => 'required|string|max:255',
 			'phone_number'				=> 'required|string',
-			'member_id'					 	=> 'required|string',
 			'admin_id'       			=> 'required|string',
 			'password'       			=> 'required|string',
 		]);
@@ -52,7 +51,7 @@ class VoterController extends Controller
 			'last_name'          	=> $data['last_name'],
 			'first_name' 				 	=> $data['first_name'],
 			'phone_number'				=> $data['phone_number'],
-			'member_id'					 	=> $data['member_id'],
+			'member_id'					 	=> generate_admin_id(),
 			'organization_name'		=> $data['organization_name'],
 			'password'						=> Hash::make('P@ssw0rd!@#'),
 		]);

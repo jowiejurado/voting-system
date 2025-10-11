@@ -24,7 +24,6 @@ class AdminController extends Controller
 		$admins = \App\Models\User::query()
 			->where('is_active', true)
 			->where('type', 'admin')
-			->orWhere('type', 'system-admin')
 			->when($q !== '', function ($query) use ($q) {
 				$query->where(function ($sub) use ($q) {
 					$sub->where('first_name', 'like', "%{$q}%");

@@ -52,16 +52,42 @@ if (! function_exists('generate_admin_id')) {
 	function generate_admin_id(int $pad = 4): string
 	{
 		return DB::transaction(function () use ($pad) {
-			$prefix = now()->format('Ymd');
+			$prefix = 'adm';
 
-			// Lock the matching rows for this date to prevent duplicates under concurrency
+			// Lock rows to avoid duplicates under concurrency
 			$last = DB::table('users')
-				->where('admin_id', 'like', "{$prefix}%")
+				->where('admin_id', 'like', $prefix . '%')
 				->orderByDesc('admin_id')
 				->lockForUpdate()
 				->value('admin_id');
 
-			$nextSeq = $last ? (int) substr($last, 8) + 1 : 1;
+			// Start at 0 if none exist yet
+			$nextSeq = $last
+				? (int) substr($last, strlen($prefix)) + 1
+				: 0;
+
+			return $prefix . str_pad((string) $nextSeq, $pad, '0', STR_PAD_LEFT);
+		});
+	}
+}
+
+if (! function_exists('generate_member_id')) {
+	function generate_member_id(int $pad = 4): string
+	{
+		return DB::transaction(function () use ($pad) {
+			$prefix = 'psi';
+
+			// Lock rows to avoid duplicates under concurrency
+			$last = DB::table('users')
+				->where('member_id', 'like', $prefix . '%')
+				->orderByDesc('member_id')
+				->lockForUpdate()
+				->value('member_id');
+
+			// Start at 0 if none exist yet
+			$nextSeq = $last
+				? (int) substr($last, strlen($prefix)) + 1
+				: 0;
 
 			return $prefix . str_pad((string) $nextSeq, $pad, '0', STR_PAD_LEFT);
 		});

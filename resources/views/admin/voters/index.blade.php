@@ -110,9 +110,9 @@
 
 	<div>
     <label class="block text-sm mb-1">Member ID</label>
-    <input type="text" name="member_id" id="member_id"
-           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
-           value="{{ old('member_id') }}" placeholder="e.g., 202510010001" required>
+    <input readonly type="text" name="member_id" id="member_id"
+           class="cursor-not-allowed w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('member_id') }}" placeholder="e.g., psi0000" required>
     @error('member_id') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
