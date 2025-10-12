@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminAuthController extends Controller
 {
-	public function __construct(private OtpService $otpService, private RecaptchaService $recaptcha) {}
+	public function __construct(private OtpService $otpService) {}
 
 	public function showLogin()
 	{
@@ -30,8 +30,6 @@ class AdminAuthController extends Controller
 			'g-recaptcha-response.captcha'  => 'reCAPTCHA verification failed. Please try again.',
     ]);
 
-		// Remove your custom $this->recaptcha->verify(...) block entirely.
-
 		if (!Auth::attempt(['admin_id' => $request->adminId, 'password' => $request->password])) {
 			return back()->with([
 				'error' => 'Invalid details',
@@ -41,7 +39,7 @@ class AdminAuthController extends Controller
 
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
-		// $this->otpService->sendOTP(Auth::user(), 'login');
+		$this->otpService->sendOTP(Auth::user(), 'login');
 
 		$user = $request->user();
 		$user->forceFill(['last_signed_in' => now('Asia/Manila')])->save();
@@ -65,8 +63,8 @@ class AdminAuthController extends Controller
 
 		$user = Auth::user();
 
-		// if ($user && $this->otpService->verifyOtp($user, $request->code)) {
-		if ($user) {
+		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
+		// if ($user) {
 			session(['otp_verified' => true]);
 			return redirect()->route('admin.dashboard')->with([
 				'success' => 'Code Confirmed',

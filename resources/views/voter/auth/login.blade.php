@@ -74,7 +74,18 @@
 							 class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
 				<input type="password" id="password" name="password" required placeholder="PASSWORD"
 							 class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
-				<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+
+				{{-- reCAPTCHA v2 Checkbox --}}
+				{!! NoCaptcha::display([
+					// Optional attributes:
+					// 'data-theme' => 'light', // or 'dark'
+					'data-size'  => 'normal', // or 'compact'
+				]) !!}
+
+				@error('g-recaptcha-response')
+					<div class="text-red-600 text-sm -mt-2">{{ $message }}</div>
+				@enderror
+
 				<button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">
 					Proceed
 				</button>
@@ -85,19 +96,14 @@
 @endsection
 
 @push('scripts')
-<script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script>
-<script>
-  // ReCAPTCHA
-  grecaptcha.ready(function(){
-    grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {action: 'voter_login'})
-      .then(token => document.getElementById('g-recaptcha-response').value = token);
-  });
-
-  // Wait 5s after all assets (incl. logo) are loaded, then run the animation.
-  window.addEventListener('load', () => {
-    const wrap = document.getElementById('auth-anim');
-    const SHOW_AFTER_MS = 2500; // 5 seconds
-    setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
-  });
-</script>
+  {{-- Loads the reCAPTCHA v2 script --}}
+  {!! NoCaptcha::renderJs() !!}
+	<script>
+		// Wait 5s after all assets (incl. logo) are loaded, then run the animation.
+		window.addEventListener('load', () => {
+			const wrap = document.getElementById('auth-anim');
+			const SHOW_AFTER_MS = 2500; // 5 seconds
+			setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
+		});
+	</script>
 @endpush

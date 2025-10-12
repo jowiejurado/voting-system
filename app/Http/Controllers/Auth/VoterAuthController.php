@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\OtpService;
-use App\Services\RecaptchaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class VoterAuthController extends Controller
 {
-	public function __construct(private OtpService $otpService, private RecaptchaService $recaptcha) {}
+	public function __construct(private OtpService $otpService) {}
 
 	public function showLogin()
 	{
@@ -21,14 +20,13 @@ class VoterAuthController extends Controller
 	public function login(Request $request)
 	{
 		$request->validate([
-			'memberId' => 'required|string',
-			'password' => 'required',
-			'g-recaptcha-response' => 'nullable|string',
-		]);
-
-		// if (!$this->recaptcha->verify((string) $request->input('g-recaptcha-response', ''), 'voter_login')) {
-		// 	return back()->with('error', 'reCAPTCHA failed');
-		// }
+			'memberId' => ['required'],
+			'password' => ['required'],
+			'g-recaptcha-response' => ['required', 'captcha'],
+    ], [
+			'g-recaptcha-response.required' => 'Please confirm you are not a robot.',
+			'g-recaptcha-response.captcha'  => 'reCAPTCHA verification failed. Please try again.',
+    ]);
 
 		if (!Auth::attempt(['member_id' => $request->memberId, 'password' => $request->password])) {
 			return back()->with([
@@ -36,7 +34,6 @@ class VoterAuthController extends Controller
 				'buttonText' => 'TRY AGAIN',
 			]);
 		}
-
 
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
