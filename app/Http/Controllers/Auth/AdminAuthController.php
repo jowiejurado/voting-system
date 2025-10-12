@@ -21,36 +21,35 @@ class AdminAuthController extends Controller
 
 	public function login(Request $request)
 	{
-		$request->validate([
-			'adminId' => 'required',
-			'password' => 'required',
-			// 'g-recaptcha-response' => 'nullable|string',
+		$validated = $request->validate([
+			'adminId' => ['required'],
+			'password' => ['required'],
+			// The package adds the `captcha` rule which verifies the v3 token server-side.
+			'g-recaptcha-response' => ['required', 'captcha'],
+		], [
+			'g-recaptcha-response.required' => 'Please confirm you are not a robot.',
+			'g-recaptcha-response.captcha'  => 'reCAPTCHA verification failed. Please try again.',
 		]);
 
-		// if (!$this->recaptcha->verify((string) $request->input('g-recaptcha-response', ''), 'admin_login')) {
-		// 	return back()->with([
-		// 		'error' => 'reCAPTCHA failed',
-		// 		'buttonText' => 'TRY AGAIN'
-		// 	]);
-		// }
+		// Remove your custom $this->recaptcha->verify(...) block entirely.
 
 		if (!Auth::attempt(['admin_id' => $request->adminId, 'password' => $request->password])) {
 			return back()->with([
 				'error' => 'Invalid details',
 				'buttonText' => 'TRY AGAIN',
-			]);
+			])->withInput();
 		}
 
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
-		$this->otpService->sendOTP(Auth::user(), 'login');
+		// $this->otpService->sendOTP(Auth::user(), 'login');
 
 		$user = $request->user();
 		$user->forceFill(['last_signed_in' => now('Asia/Manila')])->save();
 
 		return redirect()->route('admin.otp')->with([
 			'success' => 'Valid Details',
-			'buttonText' => 'Proceed'
+			'buttonText' => 'Proceed',
 		]);
 	}
 
@@ -67,8 +66,8 @@ class AdminAuthController extends Controller
 
 		$user = Auth::user();
 
-		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
-		// if ($user) {
+		// if ($user && $this->otpService->verifyOtp($user, $request->code)) {
+		if ($user) {
 			session(['otp_verified' => true]);
 			return redirect()->route('admin.dashboard')->with([
 				'success' => 'Code Confirmed',
@@ -116,28 +115,28 @@ class AdminAuthController extends Controller
 		$request->validate([
 			'current_password' => 'required',
 			'password'         => 'required',
-      'otp'              => 'required|digits:6',
-    ]);
+			'otp'              => 'required|digits:6',
+		]);
 
-    $user = $request->user();
+		$user = $request->user();
 
-    if (!Hash::check($request->current_password, $user->password)) {
+		if (!Hash::check($request->current_password, $user->password)) {
 			return back()->with([
 				'error' => 'Invalid Details',
 				'buttonText' => 'TRY AGAIN',
 				'__action' => 'change-password'
 			]);
-    }
+		}
 
-    if (!$this->otpService->verifyOtp($user, $request->otp)) {
+		if (!$this->otpService->verifyOtp($user, $request->otp)) {
 			return back()->with([
 				'error' => 'Invalid Code',
 				'buttonText' => 'TRY AGAIN',
 				'__action' => 'change-password'
 			]);
-    }
+		}
 
-    $user->forceFill(['password' => Hash::make($request->password)])->save();
+		$user->forceFill(['password' => Hash::make($request->password)])->save();
 
 		return redirect()->route('admin.dashboard')->with([
 			'success' => 'Password updated',

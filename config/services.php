@@ -43,8 +43,8 @@ return [
 	],
 
 	'recaptcha' => [
-		'site_key' => env('RECAPTCHA_SITE_KEY'),
-		'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+		'site_key' => env('NOCAPTCHA_SITEKEY'),
+		'secret_key' => env('NOCAPTCHA_SECRET'),
 	],
 
 	'iprog_sms' => [

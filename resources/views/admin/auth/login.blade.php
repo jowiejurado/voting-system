@@ -65,31 +65,40 @@
   />
 
   <div class="panel bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] w-full md:w-auto">
-    <form method="post" action="{{ route('admin.login.submit') }}" class="flex flex-col items-center gap-[24px]">
+    <form id="admin-login-form" method="post" action="{{ route('admin.login.submit') }}" class="flex flex-col items-center gap-[24px]">
       @csrf
       <h4 class="text-lg text-black font-bold">Admin 1st Step Authentication - Log in</h4>
+
       <input type="text" id="adminId" name="adminId" required placeholder="ADMIN ID"
              class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
+
       <input type="password" id="password" name="password" required placeholder="PASSWORD"
              class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
-      <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
-      <button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">
-        Proceed
-      </button>
+
+      {{-- Validation error (same key for v2/v3) --}}
+      @error('g-recaptcha-response')
+        <div class="text-red-600 text-sm -mt-2">{{ $message }}</div>
+      @enderror
+
+      {{-- reCAPTCHA v3 --}}
+      {!! NoCaptcha::displaySubmit(
+          'admin-login-form',
+          'Proceed',
+          [
+            'data-action' => 'admin_login',
+            // keep your button styling:
+            'class' => 'inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold'
+          ]
+      ) !!}
     </form>
   </div>
 </div>
 @endsection
 
 @push('scripts')
-{{-- <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}"></script> --}}
+{{-- Renders the v3 JS with your chosen action --}}
+{!! NoCaptcha::renderJs(['action' => 'admin_login']) !!}
 <script>
-  // ReCAPTCHA
-  // grecaptcha.ready(function(){
-  //   grecaptcha.execute('{{ config('services.recaptcha.site_key') }}', {action: 'admin_login'})
-  //     .then(token => document.getElementById('g-recaptcha-response').value = token);
-  // });
-
   // Wait 5s after all assets (incl. logo) are loaded, then run the animation.
   window.addEventListener('load', () => {
     const wrap = document.getElementById('auth-anim');
