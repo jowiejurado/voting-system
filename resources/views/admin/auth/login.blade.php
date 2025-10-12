@@ -75,35 +75,35 @@
       <input type="password" id="password" name="password" required placeholder="PASSWORD"
              class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
 
-      {{-- Validation error (same key for v2/v3) --}}
+     {{-- reCAPTCHA v2 Checkbox --}}
+      {!! NoCaptcha::display([
+				// Optional attributes:
+				// 'data-theme' => 'light', // or 'dark'
+				'data-size'  => 'normal', // or 'compact'
+      ]) !!}
+
       @error('g-recaptcha-response')
         <div class="text-red-600 text-sm -mt-2">{{ $message }}</div>
       @enderror
 
-      {{-- reCAPTCHA v3 --}}
-      {!! NoCaptcha::displaySubmit(
-          'admin-login-form',
-          'Proceed',
-          [
-            'data-action' => 'admin_login',
-            // keep your button styling:
-            'class' => 'inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold'
-          ]
-      ) !!}
+			<button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">
+        Proceed
+      </button>
     </form>
   </div>
 </div>
 @endsection
 
 @push('scripts')
-{{-- Renders the v3 JS with your chosen action --}}
-{!! NoCaptcha::renderJs(['action' => 'admin_login']) !!}
-<script>
-  // Wait 5s after all assets (incl. logo) are loaded, then run the animation.
-  window.addEventListener('load', () => {
-    const wrap = document.getElementById('auth-anim');
-    const SHOW_AFTER_MS = 2500; // 5 seconds
-    setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
-  });
-</script>
+  {{-- Loads the reCAPTCHA v2 script --}}
+  {!! NoCaptcha::renderJs() !!}
+
+	<script>
+		// Wait 5s after all assets (incl. logo) are loaded, then run the animation.
+		window.addEventListener('load', () => {
+			const wrap = document.getElementById('auth-anim');
+			const SHOW_AFTER_MS = 2500; // 5 seconds
+			setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
+		});
+	</script>
 @endpush

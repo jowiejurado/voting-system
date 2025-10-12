@@ -21,15 +21,14 @@ class AdminAuthController extends Controller
 
 	public function login(Request $request)
 	{
-		$validated = $request->validate([
+		$request->validate([
 			'adminId' => ['required'],
 			'password' => ['required'],
-			// The package adds the `captcha` rule which verifies the v3 token server-side.
 			'g-recaptcha-response' => ['required', 'captcha'],
-		], [
+    ], [
 			'g-recaptcha-response.required' => 'Please confirm you are not a robot.',
 			'g-recaptcha-response.captcha'  => 'reCAPTCHA verification failed. Please try again.',
-		]);
+    ]);
 
 		// Remove your custom $this->recaptcha->verify(...) block entirely.
 
