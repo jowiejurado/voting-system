@@ -24,7 +24,7 @@
         id="{{ $form['id'] ?? ($id.'-form') }}"
         method="post"
         action="{{ $form['action'] ?? '' }}"
-        class="px-5 py-4 space-y-4"
+        class="px-5 py-4 space-y-4 overflow-y-scroll max-h-[85vh]"
       >
         @csrf
         @if(!empty($form['spoof']))

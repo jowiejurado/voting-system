@@ -29,7 +29,8 @@ class User extends Authenticatable
 		'has_voted',
 		'is_active',
 		'last_signed_in',
-		'last_signed_out'
+		'last_signed_out',
+		'face_descriptor'
 	];
 
 	/**
@@ -50,6 +51,7 @@ class User extends Authenticatable
 	protected function casts(): array
 	{
 		return [
+			'face_descriptor' => 'array',
 			'password' => 'hashed',
 			'has_voted' => 'boolean',
 			'is_active' => 'boolean',

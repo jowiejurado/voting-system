@@ -9,9 +9,10 @@ use App\Http\Controllers\Admin\VoterController as AdminVoterController;
 use App\Http\Controllers\Admin\ElectionController as AdminElectionController;
 use App\Http\Controllers\Admin\ArchiveElectionController as AdminArchiveController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Http\Controllers\Auth\FaceEnrollController;
 use App\Http\Controllers\Auth\VoterAuthController;
-use App\Http\Controllers\Voter\AccountController;
 use App\Http\Controllers\Voter\BallotController;
+use App\Http\Controllers\Voter\VoterFaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home');
@@ -56,6 +57,10 @@ Route::prefix('voter')->name('voter.')->group(function () {
 	Route::middleware(['voter'])->group(function () {
 		Route::get('ballot', [BallotController::class, 'showBallot'])->name('ballot');
 		Route::post('ballot/submit', [BallotController::class, 'submit'])->name('ballot.submit');
-
+		Route::get('face', [VoterFaceController::class, 'show'])->name('face');
+    Route::post('face/verify', [VoterFaceController::class, 'verify'])->name('face.verify');
 	});
 });
+
+Route::get('/face/enroll', [FaceEnrollController::class, 'show'])->name('face.enroll.show');
+Route::post('/face/enroll', [FaceEnrollController::class, 'store'])->name('face.enroll.store');

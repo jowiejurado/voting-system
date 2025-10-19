@@ -64,7 +64,7 @@ class VoterAuthController extends Controller
 		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
 		// if ($user) {
 			session(['otp_verified' => true]);
-			return redirect()->route('voter.ballot')->with([
+			return redirect()->route('voter.face')->with([
 				'success' => 'Code Confirmed',
 				'buttonText' => 'Proceed'
 			]);
