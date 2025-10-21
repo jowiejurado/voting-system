@@ -46,6 +46,7 @@ class AdminController extends Controller
 			'phone_number'				=> 'required|string',
 			'admin_id'       			=> 'required|string',
 			'password'       			=> 'required|string',
+			'face_descriptor_json' 	=> 'required|string',
 		]);
 
 		if (Auth::user()->type != 'system-admin') {
@@ -59,6 +60,24 @@ class AdminController extends Controller
 		assert_current_user_is_admin();
 		assert_admin_credentials($data['admin_id'], $data['password']);
 
+		// Decode descriptor if present and validate length=128
+		$descriptor = null;
+		if (!empty($data['face_descriptor_json'])) {
+			try {
+				$arr = json_decode($data['face_descriptor_json'], true, 512, JSON_THROW_ON_ERROR);
+				if (is_array($arr) && count($arr) === 128 && array_reduce($arr, fn($ok, $v) => $ok && is_numeric($v), true)) {
+					// Normalize to floats
+					$descriptor = array_map('floatval', $arr);
+				}
+			} catch (\Throwable $e) {
+				// ignore, treat as no descriptor
+			}
+		}
+
+		if (!$descriptor) {
+			return back()->withErrors(['face_descriptor_json' => 'Please capture a face.'])->withInput();
+		}
+
 		User::create([
 			'last_name'          	=> $data['last_name'],
 			'first_name' 				 	=> $data['first_name'],
@@ -66,6 +85,7 @@ class AdminController extends Controller
 			'admin_id'					 	=> generate_admin_id(),
 			'type'								=> 'admin',
 			'password'						=> Hash::make('P@ssw0rd!@#'),
+			'face_descriptor'    => $descriptor,
 		]);
 
 		return redirect()->route('admin.index')

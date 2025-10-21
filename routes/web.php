@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminFaceController;
 use App\Http\Controllers\Admin\CandidateController as AdminCandidateController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PositionController as AdminPositionController;
@@ -9,7 +10,6 @@ use App\Http\Controllers\Admin\VoterController as AdminVoterController;
 use App\Http\Controllers\Admin\ElectionController as AdminElectionController;
 use App\Http\Controllers\Admin\ArchiveElectionController as AdminArchiveController;
 use App\Http\Controllers\Auth\AdminAuthController;
-use App\Http\Controllers\Auth\FaceEnrollController;
 use App\Http\Controllers\Auth\VoterAuthController;
 use App\Http\Controllers\Voter\BallotController;
 use App\Http\Controllers\Voter\VoterFaceController;
@@ -38,6 +38,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 		Route::get('archives', [AdminArchiveController::class, 'index'])->name('archives.index');
 		Route::get('votes', [AdminVoteController::class, 'index'])->name('votes.index');
 		Route::get('voter-status', [AdminVoteController::class, 'voterStatus'])->name('voter-status.index');
+		Route::get('face', [AdminFaceController::class, 'show'])->name('face');
+    Route::post('face/verify', [AdminFaceController::class, 'verify'])->name('face.verify');
 	});
 });
 
@@ -62,5 +64,3 @@ Route::prefix('voter')->name('voter.')->group(function () {
 	});
 });
 
-Route::get('/face/enroll', [FaceEnrollController::class, 'show'])->name('face.enroll.show');
-Route::post('/face/enroll', [FaceEnrollController::class, 'store'])->name('face.enroll.store');

@@ -66,7 +66,8 @@ class AdminAuthController extends Controller
 		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
 		// if ($user) {
 			session(['otp_verified' => true]);
-			return redirect()->route('admin.dashboard')->with([
+			$route = Auth::user()->type === 'system-admin' ? 'admin.dashboard' : 'admin.face';
+			return redirect()->route($route)->with([
 				'success' => 'Code Confirmed',
 				'buttonText' => 'Proceed'
 			]);

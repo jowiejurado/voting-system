@@ -6,15 +6,19 @@
 <div class="flex flex-col gap-6 px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Admin</h1>
-    <div class="flex items-center justify-between">
-			<button type="button" id="btn-add"
-							class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
-							data-modal-open="#admin-modal">
-				Add Admin
-			</button>
+    <div class="flex items-center">
+
+			@if (Auth::user() && Auth::user()->type == 'system-admin')
+				<button
+					type="button" id="btn-add"
+					class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
+					data-modal-open="#admin-modal">
+					Add Admin
+				</button>
+			@endif
 
 			<form id="search-form" method="GET" action="{{ route('admin.index') }}"
-						class="flex items-center gap-x-2">
+						class="flex items-center gap-x-2 ml-auto">
 				<label for="search">Search:</label>
 				<input id="search" name="q" type="search"
 							value="{{ $q ?? '' }}"
@@ -137,6 +141,35 @@
     @error('phone_number') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
+  <input type="hidden" name="face_descriptor_json" id="face_descriptor_json_admin" data-clear-on-close>
+
+  <div class="mt-3 border-2 border-gray-300 rounded-xl p-3">
+    <div class="flex items-center justify-between mb-2">
+      <label class="block text-sm font-semibold">Face Capture (required)</label>
+      <span class="text-xs text-gray-500">Ensure good lighting; remove masks/sunglasses.</span>
+    </div>
+
+    <div class="flex items-center gap-4">
+      {{-- live preview --}}
+      <video id="admin_cam" autoplay playsinline muted width="240" height="180" class="bg-black rounded"></video>
+      {{-- snapshot preview --}}
+      <canvas id="admin_snap" width="240" height="180" class="hidden rounded border"></canvas>
+
+      <div class="flex flex-col gap-2">
+        <button type="button" id="btn-capture-face-admin"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded disabled:opacity-50" disabled>
+          Capture Face
+        </button>
+        <button type="button" id="btn-clear-face-admin"
+          class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-1.5 rounded disabled:opacity-50" disabled>
+          Clear
+        </button>
+        <span id="face-status-admin" class="text-xs text-gray-600 mt-1">No face captured yet.</span>
+      </div>
+    </div>
+  </div>
+  {{-- ===== /Face registration ===== --}}
+
   <x-ui.admin-auth class="pt-2" />
 </x-ui.modal>
 
@@ -161,13 +194,15 @@
 <meta name="admin-delete-url" content="{{ route('admin.destroy', ':id') }}">
 @endsection
 
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
 @push('scripts')
 <script>
 	function showTableLoading() {
     const el = document.getElementById('table-loading');
     if (el) el.classList.remove('hidden');
   }
-	// Hide loader if user navigates back/forward via bfcache
+
   window.addEventListener('pageshow', function (e) {
     if (e.persisted) {
       const el = document.getElementById('table-loading');
@@ -188,7 +223,6 @@
       }, 350);
     });
 
-    // Keep focus + caret on load
     input.focus();
     const len = input.value.length;
     try { input.setSelectionRange(len, len); } catch(e){}
@@ -201,23 +235,20 @@
     if (!select) return;
     select.addEventListener('change', () => {
       showTableLoading();
-      // submit handled by inline onchange
+
     });
   })();
 
-  // --- Pagination links: show loader before navigation ---
   (function(){
     const pager = document.getElementById('pagination');
     if (!pager) return;
     pager.addEventListener('click', (e) => {
       const a = e.target.closest('a');
-      if (!a) return;          // clicking on current page (span) does nothing
+      if (!a) return;
       showTableLoading();
-      // let the browser navigate normally
     });
   })();
 
-  // ---- Your existing modal wiring below (unchanged) ----
   const updateTpl = document.querySelector('meta[name="admin-update-url"]').content;
   const deleteTpl = document.querySelector('meta[name="admin-delete-url"]').content;
 
@@ -290,5 +321,184 @@
     window.Modal.openById('admin-modal');
   @endif
 </script>
-@endpush
 
+<script>
+(function(){
+  function sayA(t){ const s=document.getElementById('face-status-admin'); if(s) s.textContent=t; console.log('[admin face]', t); }
+
+  const adminModalId = 'admin-modal';
+  const formId = 'admin-form';
+  let A = {}, _astream=null, _amodels=false, _aModalObs=null;
+
+  function ah(){
+    A.modal = document.getElementById(adminModalId);
+    A.cam   = document.getElementById('admin_cam');
+    A.snap  = document.getElementById('admin_snap');
+    A.cap   = document.getElementById('btn-capture-face-admin');
+    A.clear = document.getElementById('btn-clear-face-admin');
+    A.desc  = document.getElementById('face_descriptor_json_admin');
+    A.form  = document.getElementById(formId);
+  }
+
+  function aResetUI(){
+    ah();
+    if(A.desc) A.desc.value = '';
+    if(A.cam)  A.cam.classList.remove('hidden');
+    if(A.snap) A.snap.classList.add('hidden');
+    sayA('No face captured yet.');
+  }
+
+  function aStop(){
+    if(_astream){ _astream.getTracks().forEach(t=>t.stop()); _astream=null; }
+    ah();
+    if(A.cap)   A.cap.disabled = true;
+    if(A.clear) A.clear.disabled = true;
+  }
+
+  async function aLoadModels(){
+    if(_amodels) return;
+    try{
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+      await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+      _amodels = true;
+    }catch(e){ console.warn('[admin face] model load:', e); }
+  }
+
+  async function aAttachStream(st, attempt=1){
+    ah();
+    if(!A.cam){
+      if(attempt<=2){ await new Promise(r=>setTimeout(r,100)); return aAttachStream(st, attempt+1); }
+      sayA('Video not ready. Please reopen the modal.'); return;
+    }
+    aStop();
+    _astream = st;
+    A.cam.srcObject = _astream;
+
+    await new Promise(res => { A.cam.onloadedmetadata = () => res(); if (A.cam.readyState >= 1) res(); });
+    try { A.cam.muted = true; A.cam.setAttribute('playsinline',''); await A.cam.play(); }
+    catch(e){ A.cam.addEventListener('click', ()=> A.cam.play(), {once:true}); }
+
+    if(A.cap)   A.cap.disabled   = false;
+    if(A.clear) A.clear.disabled = false;
+    sayA('Camera on. Click "Capture Face" when ready.');
+  }
+
+  async function aStartCam(){
+    ah();
+    try{
+      await aLoadModels();
+
+      let stream=null;
+      try{
+        const devs=await navigator.mediaDevices.enumerateDevices();
+        const cams=devs.filter(d=>d.kind==='videoinput');
+        if(cams[0]?.deviceId){
+          stream = await navigator.mediaDevices.getUserMedia({
+            video:{ deviceId:{exact:cams[0].deviceId}, width:{ideal:640}, height:{ideal:480} }, audio:false
+          });
+        }
+      }catch(_){}
+      if(!stream){
+        try{
+          stream = await navigator.mediaDevices.getUserMedia({
+            video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:false
+          });
+        }catch(_){}
+      }
+      if(!stream){
+        stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
+      }
+      await aAttachStream(stream);
+    }catch(e){
+      console.error('[admin face] startCam:', e);
+      sayA(`Camera error: ${e.name} — ${e.message}`);
+    }
+  }
+
+  async function aCapture(){
+    ah();
+    const opts = new faceapi.TinyFaceDetectorOptions({ inputSize:224, scoreThreshold:0.5 });
+    const det = await faceapi.detectSingleFace(A.cam, opts).withFaceLandmarks().withFaceDescriptor();
+    if(!det){ sayA('No face detected. Center your face with good lighting and try again.'); return null; }
+    return Array.from(det.descriptor);
+  }
+
+  function aStartModalObserver(){
+    ah();
+    if(!A.modal) return;
+    if(_aModalObs){ _aModalObs.disconnect(); _aModalObs=null; }
+
+    _aModalObs = new MutationObserver(() => {
+      const visible = A.modal && A.modal.offsetParent !== null;
+      if(!visible){ aStop(); }
+    });
+    _aModalObs.observe(A.modal, { attributes:true, attributeFilter:['style','class','aria-hidden'] });
+
+    const rootObs = new MutationObserver(() => {
+      const inDom = document.body.contains(A.modal);
+      if(!inDom){ aStop(); rootObs.disconnect(); }
+    });
+    rootObs.observe(document.body, { childList:true, subtree:true });
+  }
+
+  document.addEventListener('click', (e)=>{
+    if (e.target.closest('#btn-add') || e.target.closest('.btn-edit')) {
+      if (!document.getElementById(adminModalId)) return; // safety
+      aResetUI();
+      sayA('Initializing camera…');
+      setTimeout(()=>{ aStartCam(); aStartModalObserver(); }, 250);
+    }
+  });
+
+  document.addEventListener('click', (e)=>{
+    if (
+      e.target.matches('[data-modal-close], .modal-close, [aria-label="Close"], button[title="Close"]') ||
+      e.target.closest('[data-modal-close], .modal-close')
+    ) { aStop(); }
+  });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') aStop(); });
+  window.addEventListener('beforeunload', aStop);
+
+  document.addEventListener('click', (e)=>{
+    if(e.target.id==='btn-capture-face-admin') (async()=>{
+      ah();
+      if(!_astream){ sayA('Camera not started yet.'); return; }
+
+      if(A.snap && A.cam){
+        const ctx=A.snap.getContext('2d');
+        A.snap.classList.remove('hidden');
+        ctx.drawImage(A.cam, 0, 0, A.snap.width, A.snap.height);
+        A.cam.classList.add('hidden');
+      }
+
+      const vec = await aCapture();
+      if(vec && A.desc){
+        A.desc.value = JSON.stringify(vec);
+        sayA('Face captured ✓');
+      }
+    })();
+
+    if(e.target.id==='btn-clear-face-admin'){
+      ah();
+      if(A.desc) A.desc.value='';
+      if(A.cam)  A.cam.classList.remove('hidden');
+      if(A.snap) A.snap.classList.add('hidden');
+      sayA('Cleared. Capture again if needed.');
+    }
+  });
+
+  document.addEventListener('submit', (e)=>{
+    if(e.target && e.target.id===formId){
+      ah();
+      if(!A.desc || !A.desc.value){
+        e.preventDefault();
+        sayA('Face capture is required. Please click "Capture Face".');
+        return;
+      }
+      aStop();
+    }
+  });
+})();
+</script>
+@endpush

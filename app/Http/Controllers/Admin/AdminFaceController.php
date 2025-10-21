@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Voter;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Support\FaceMetric;
 
-class VoterFaceController extends Controller
+class AdminFaceController extends Controller
 {
 	public function show(Request $request)
 	{
@@ -15,12 +15,15 @@ class VoterFaceController extends Controller
 		abort_unless($user, 403);
 
 		if (!$user->face_descriptor || count($user->face_descriptor) !== 128) {
-			return redirect()->route('voter.logout');
+			return redirect()->route('admin.logout')->with([
+				'error' => 'Admin face is not yet registered. Please contact your system admin.',
+				'buttonText' => 'Okay'
+			]);
 		}
 
-		return view('voter.auth.face', [
+		return view('admin.auth.face', [
 			'threshold' => 0.6,
-			'nextUrl'   => route('voter.ballot'),
+			'nextUrl'   => route('admin.dashboard'),
 		]);
 	}
 
@@ -64,7 +67,7 @@ class VoterFaceController extends Controller
 
 		session(['face_verified_at' => now()->toIso8601String()]);
 
-		return redirect()->to($request->input('next', route('voter.ballot')))
+		return redirect()->to($request->input('next', route('admin.dashboard')))
 			->with([
 				'success' => 'Face verification successful.',
 				'buttonText' => 'Proceed'
