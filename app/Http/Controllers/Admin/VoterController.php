@@ -85,29 +85,46 @@ class VoterController extends Controller
 	public function update(Request $request, User $voter)
 	{
 		$data = $request->validate([
-			'first_name'          => 'required|string|max:255',
-			'last_name'           => 'required|string|max:255',
-			'organization_name'   => 'required|string|max:255',
-			'phone_number'				=> 'required|string',
-			'member_id'					 	=> 'required|string',
-			'admin_id'       			=> 'required|string',
-			'password'       			=> 'required|string',
+			'first_name'          	=> 'required|string|max:255',
+			'last_name'           	=> 'required|string|max:255',
+			'organization_name'   	=> 'required|string|max:255',
+			'phone_number'        	=> 'required|string',
+			'member_id'           	=> 'required|string',
+			'admin_id'            	=> 'required|string',
+			'password'            	=> 'required|string',
+			'face_descriptor_json' 	=> 'nullable|string',
 		]);
 
 		assert_current_user_is_admin();
 		assert_admin_credentials($data['admin_id'], $data['password']);
 
+		$descriptor = $voter->face_descriptor;
+
+		if (!empty($data['face_descriptor_json'])) {
+			try {
+				$arr = json_decode($data['face_descriptor_json'], true, 512, JSON_THROW_ON_ERROR);
+				if (is_array($arr) && count($arr) === 128 && array_reduce($arr, fn($ok, $v) => $ok && is_numeric($v), true)) {
+					$descriptor = array_map('floatval', $arr);
+				} else {
+					return back()->withErrors(['face_descriptor_json' => 'Invalid face descriptor format.'])->withInput();
+				}
+			} catch (\Throwable $e) {
+				return back()->withErrors(['face_descriptor_json' => 'Invalid face descriptor JSON.'])->withInput();
+			}
+		}
+
 		$voter->update([
-			'last_name'          	=> $data['last_name'],
-			'first_name' 				 	=> $data['first_name'],
-			'phone_number'				=> $data['phone_number'],
-			'member_id'					 	=> $data['member_id'],
-			'organization_name'		=> $data['organization_name'],
+			'last_name'          => $data['last_name'],
+			'first_name'         => $data['first_name'],
+			'phone_number'       => $data['phone_number'],
+			'member_id'          => $data['member_id'],
+			'organization_name'  => $data['organization_name'],
+			'face_descriptor'    => $descriptor, // Update descriptor if changed
 		]);
 
 		return redirect()->route('admin.voters.index')
 			->with([
-				'success' => 'Successfully Submitted',
+				'success' => 'Successfully Updated',
 				'buttonText' => 'Proceed'
 			]);
 	}

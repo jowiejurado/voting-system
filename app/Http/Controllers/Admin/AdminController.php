@@ -51,10 +51,10 @@ class AdminController extends Controller
 
 		if (Auth::user()->type != 'system-admin') {
 			return redirect()->route('admin.index')
-			->with([
-				'error' => 'Unauthorized',
-				'buttonText' => 'Proceed'
-			]);
+				->with([
+					'error' => 'Unauthorized',
+					'buttonText' => 'Proceed'
+				]);
 		}
 
 		assert_current_user_is_admin();
@@ -97,26 +97,59 @@ class AdminController extends Controller
 
 	public function update(Request $request, User $admin)
 	{
+		if (Auth::user()->type != 'system-admin') {
+			return redirect()->route('admin.index')
+				->with([
+					'error' => 'Unauthorized',
+					'buttonText' => 'Proceed'
+				]);
+		}
+
 		$data = $request->validate([
-			'first_name'          => 'required|string|max:255',
-			'last_name'           => 'required|string|max:255',
-			'phone_number'				=> 'required|string',
-			'admin_id'       			=> 'required|string',
-			'password'       			=> 'required|string',
+			'first_name'           => 'required|string|max:255',
+			'last_name'            => 'required|string|max:255',
+			'phone_number'         => 'required|string',
+			'admin_id'             => 'required|string',
+			'password'             => 'required|string',
+			'face_descriptor_json' => 'nullable|string',
 		]);
 
 		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		assert_admin_credentials($data['admin_id'], $data['password']);
+
+		$descriptor = $admin->face_descriptor;
+
+		if (!empty($data['face_descriptor_json'])) {
+			try {
+				$arr = json_decode($data['face_descriptor_json'], true, 512, JSON_THROW_ON_ERROR);
+				if (
+					is_array($arr)
+					&& count($arr) === 128
+					&& array_reduce($arr, fn($ok, $v) => $ok && is_numeric($v), true)
+				) {
+					$descriptor = array_map('floatval', $arr);
+				} else {
+					return back()->withErrors([
+						'face_descriptor_json' => 'Invalid face descriptor format.',
+					])->withInput();
+				}
+			} catch (\Throwable $e) {
+				return back()->withErrors([
+					'face_descriptor_json' => 'Invalid face descriptor JSON.',
+				])->withInput();
+			}
+		}
 
 		$admin->update([
-			'last_name'          	=> $data['last_name'],
-			'first_name' 				 	=> $data['first_name'],
-			'phone_number'				=> $data['phone_number'],
+			'last_name'        => $data['last_name'],
+			'first_name'       => $data['first_name'],
+			'phone_number'     => $data['phone_number'],
+			'face_descriptor'  => $descriptor,
 		]);
 
 		return redirect()->route('admin.index')
 			->with([
-				'success' => 'Successfully Submitted',
+				'success' => 'Successfully Updated',
 				'buttonText' => 'Proceed'
 			]);
 	}
@@ -129,7 +162,7 @@ class AdminController extends Controller
 		]);
 
 		assert_current_user_is_admin();
-    assert_admin_credentials($request->input('admin_id'), $request->input('password'));
+		assert_admin_credentials($request->input('admin_id'), $request->input('password'));
 
 		$admin->forceFill(['is_active' => false])->save();
 
