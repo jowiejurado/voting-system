@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Voter;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmitBallotRequest;
+use App\Models\Candidate;
 use App\Models\Election;
 use App\Models\Position;
 use App\Models\User;
@@ -22,7 +23,6 @@ class BallotController extends Controller
 
 		// Find active election window
 		$election = Election::query()
-			->where('is_active', true)
 			->whereDate('date', $today)
 			->whereTime('start_time', '<=', $now->format('H:i:s'))
 			->whereTime('end_time', '>=', $now->format('H:i:s'))
@@ -40,6 +40,12 @@ class BallotController extends Controller
 
 		if ($alreadyVoted) {
 			return view('voter.ballot_already_voted', compact('election'));
+		}
+
+		$hasCandidates = Candidate::where('election_id', $election->id)->exists();
+
+		if ($hasCandidates) {
+			return view('voter.no_candidates');
 		}
 
 		$positions = Position::query()

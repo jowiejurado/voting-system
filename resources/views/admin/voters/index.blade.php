@@ -144,10 +144,19 @@
       @error('organization_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
     </div>
 
-    {{-- Face capture UI (REQUIRED) --}}
+    {{-- Optional: show Member ID when editing --}}
+    <div>
+      <label class="block text-sm mb-1">Member ID</label>
+      <input type="text" name="member_id" id="member_id"
+             class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+             value="{{ old('member_id') }}" placeholder="e.g., M-000001" readonly>
+      @error('member_id') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+    </div>
+
+    {{-- Face capture UI (required on Add; optional on Edit) --}}
     <div class="mt-3 border-2 border-gray-300 rounded-xl p-3">
       <div class="flex items-center justify-between mb-2">
-        <label class="block text-sm font-semibold">Face Capture (required)</label>
+        <label class="block text-sm font-semibold">Face Capture <span class="font-normal">(required on add)</span></label>
         <span class="text-xs text-gray-500">Ensure good lighting; remove masks/sunglasses.</span>
       </div>
 
@@ -195,7 +204,6 @@
   </div>
 </x-ui.modal>
 
-{{-- Meta routes for JS (avoid Blade in <script>) --}}
 <meta name="voter-store-url" content="{{ route('admin.voters.store') }}">
 <meta name="voter-update-url" content="{{ route('admin.voters.update', ':id') }}">
 <meta name="voter-delete-url" content="{{ route('admin.voters.destroy', ':id') }}">
@@ -204,12 +212,10 @@
 {{-- Face API --}}
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
-@verbatim
+@push('scripts')
 <script>
-  // ========== helper
-  function say(t){ const s=document.getElementById('face-status'); if(s) s.textContent=t; console.log('[face]', t); }
+  function say(t){ const s=document.getElementById('face-status'); if(s) s.textContent=t; }
 
-  // ========== refs/state
   let refs = {};
   function hydrate(){
     refs.modal = document.getElementById('voter-modal');
@@ -247,30 +253,15 @@
       if (!isVisible) { stopCamera(); }
     });
     _modalObserver.observe(refs.modal, { attributes: true, attributeFilter: ['style','class','aria-hidden'] });
-
-    // Also stop if modal is removed from DOM
-    const rootObserver = new MutationObserver(() => {
-      const stillInDom = document.body.contains(refs.modal);
-      if (!stillInDom) { stopCamera(); rootObserver.disconnect(); }
-    });
-    rootObserver.observe(document.body, { childList:true, subtree:true });
   }
 
-  async function attachStream(st, attempt=1){
+  async function attachStream(st){
     hydrate();
-    if (!refs.cam) {
-      if (attempt <= 2) { await new Promise(r => setTimeout(r, 100)); return attachStream(st, attempt+1); }
-      say('Video not ready. Please reopen the modal.');
-      return;
-    }
     stopCamera();
     _stream = st;
     refs.cam.srcObject = _stream;
-
     await new Promise(res => { refs.cam.onloadedmetadata = () => res(); if (refs.cam.readyState >= 1) res(); });
-    try { refs.cam.muted = true; refs.cam.setAttribute('playsinline',''); await refs.cam.play(); }
-    catch(e) { refs.cam.addEventListener('click', ()=> refs.cam.play(), { once:true }); }
-
+    try { refs.cam.muted = true; refs.cam.setAttribute('playsinline',''); await refs.cam.play(); } catch(_){}
     if (refs.cap)   refs.cap.disabled   = false;
     if (refs.clear) refs.clear.disabled = false;
     say('Camera on. Click "Capture Face" when ready.');
@@ -278,14 +269,10 @@
 
   async function loadModelsOnce(){
     if(_modelsLoaded) return;
-    try{
-      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-      _modelsLoaded = true;
-    }catch(e){
-      console.warn('Model load warning:', e);
-    }
+    await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+    _modelsLoaded = true;
   }
 
   async function startCamera(){
@@ -293,35 +280,26 @@
     try{
       await loadModelsOnce();
 
-      let stream = null;
+      let stream=null;
       try{
-        const devs = await navigator.mediaDevices.enumerateDevices();
-        const cams = devs.filter(d => d.kind === 'videoinput');
-        if (cams[0]?.deviceId) {
+        const devs=await navigator.mediaDevices.enumerateDevices();
+        const cams=devs.filter(d=>d.kind==='videoinput');
+        if(cams[0]?.deviceId){
           stream = await navigator.mediaDevices.getUserMedia({
-            video: { deviceId:{ exact:cams[0].deviceId }, width:{ideal:640}, height:{ideal:480} },
-            audio: false
+            video:{ deviceId:{exact:cams[0].deviceId}, width:{ideal:640}, height:{ideal:480} }, audio:false
           });
         }
       }catch(_){}
-
       if(!stream){
         try{
           stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode:'user', width:{ideal:640}, height:{ideal:480} },
-            audio:false
+            video:{ facingMode:'user', width:{ideal:640}, height:{ideal:480} }, audio:false
           });
         }catch(_){}
       }
-      if(!stream){
-        stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false });
-      }
-
+      if(!stream){ stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false }); }
       await attachStream(stream);
-    }catch(e){
-      console.error('startCamera error:', e);
-      say(`Camera error: ${e.name} — ${e.message}`);
-    }
+    }catch(e){ say(`Camera error: ${e.name} — ${e.message}`); }
   }
 
   async function captureDescriptor(){
@@ -332,46 +310,27 @@
     return Array.from(det.descriptor);
   }
 
-  // Open modal → auto camera + observer
+  // Open modal → start camera
   document.addEventListener('click', (e) => {
     if (e.target.closest('#btn-add') || e.target.closest('.btn-edit')) {
       resetFaceUI();
-      say('Initializing camera…');
-      setTimeout(() => { startCamera(); startModalObserver(); }, 250);
+      setTimeout(() => { startCamera(); startModalObserver(); }, 200);
     }
   });
 
-  // Close modal → stop camera (X button, backdrop, etc.)
-  document.addEventListener('click', (e) => {
-    if (
-      e.target.matches('[data-modal-close], .modal-close, [aria-label="Close"], button[title="Close"]') ||
-      e.target.closest('[data-modal-close], .modal-close')
-    ) {
-      stopCamera();
-    }
-  });
-  // ESC → close → stop camera
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') stopCamera(); });
-
-  // Buttons
+  // Camera buttons
   document.addEventListener('click', (e) => {
     if (e.target.id === 'btn-capture-face') (async () => {
       hydrate();
       if(!_stream){ say('Camera not started yet.'); return; }
-
-      // snapshot
       if(refs.snap && refs.cam){
         const ctx = refs.snap.getContext('2d');
         refs.snap.classList.remove('hidden');
         ctx.drawImage(refs.cam, 0, 0, refs.snap.width, refs.snap.height);
         refs.cam.classList.add('hidden');
       }
-
       const vec = await captureDescriptor();
-      if (vec && refs.desc) {
-        refs.desc.value = JSON.stringify(vec);
-        say('Face captured ✓');
-      }
+      if (vec && refs.desc) { refs.desc.value = JSON.stringify(vec); say('Face captured ✓'); }
     })();
 
     if (e.target.id === 'btn-clear-face') {
@@ -383,23 +342,7 @@
     }
   });
 
-  // Require face before submit; stop camera on successful submit
-  document.addEventListener('submit', (e) => {
-    hydrate();
-    if (e.target && e.target.id === 'voter-form') {
-      if (!refs.desc || !refs.desc.value) {
-        e.preventDefault();
-        say('Face capture is required. Please click "Capture Face".');
-        return;
-      }
-      stopCamera(); // stop stream right before navigation
-    }
-  });
-
-  // Safety
-  window.addEventListener('beforeunload', stopCamera);
-
-  // ===== Table/search utilities
+  // ---------- Table/search UI ----------
   function showTableLoading(){ const el=document.getElementById('table-loading'); if(el) el.classList.remove('hidden'); }
   window.addEventListener('pageshow', (e)=>{ if(e.persisted){ const el=document.getElementById('table-loading'); if(el) el.classList.add('hidden'); } });
 
@@ -440,24 +383,25 @@
 
   document.addEventListener('click', (e)=>{
     if(e.target.closest('#btn-add')){
-      if(voterForm && storeUrl) voterForm.action = storeUrl;
-      if(methodField)  methodField.value   = 'POST';
+      voterForm.action = @json(route('admin.voters.store'));
+      methodField.value = 'POST';
       if(modalTitleEl) modalTitleEl.textContent = 'Add Voter';
       if(submitBtn)    submitBtn.textContent    = 'Submit';
-      if(firstNameInp) firstNameInp.value = '';
-      if(lastNameInp)  lastNameInp.value  = '';
-      if(orgNameInp)   orgNameInp.value   = '';
-      if(memberIdInp)  memberIdInp.value  = '';
+      if(firstNameInp)   firstNameInp.value   = '';
+      if(lastNameInp)    lastNameInp.value    = '';
+      if(orgNameInp)     orgNameInp.value     = '';
+      if(memberIdInp)    memberIdInp.value    = '';
       if(phoneNumberInp) phoneNumberInp.value = '';
+      voterModal?.setAttribute('data-mode', 'add');
       return;
     }
 
     const editBtn = e.target.closest('.btn-edit');
     if(editBtn){
       const id  = editBtn.dataset.id;
-      const url = (updateTpl || '').replace(':id', id);
-      if(voterForm && url) voterForm.action = url;
-      if(methodField)  methodField.value = 'PUT';
+      const url = updateTpl.replace(':id', id);
+      voterForm.action = url;
+      methodField.value = 'PUT';
       if(modalTitleEl) modalTitleEl.textContent = 'Edit Voter';
       if(submitBtn)    submitBtn.textContent    = 'Update';
 
@@ -466,6 +410,8 @@
       if(orgNameInp)     orgNameInp.value     = editBtn.dataset.organization_name || '';
       if(memberIdInp)    memberIdInp.value    = editBtn.dataset.member_id  || '';
       if(phoneNumberInp) phoneNumberInp.value = editBtn.dataset.phone_number || '';
+
+      voterModal?.setAttribute('data-mode', 'edit');
       return;
     }
   });
@@ -480,11 +426,27 @@
     const delBtn = e.target.closest('.btn-delete'); if(!delBtn) return;
     const id   = delBtn.dataset.id;
     const name = `${delBtn.dataset.firstname} ${delBtn.dataset.lastname}` || 'this voter';
-    if(deleteForm && deleteTpl) deleteForm.action = deleteTpl.replace(':id', id);
+    deleteForm.action = deleteTpl.replace(':id', id);
     if(delIdHidden)        delIdHidden.value = id;
     if(delLastNameHidden)  delLastNameHidden.value = delBtn.dataset.lastname;
     if(delFirstNameHidden) delFirstNameHidden.value = delBtn.dataset.firstname;
     if(delFullNameSpan)    delFullNameSpan.textContent = name;
   });
+
+  // Require face only on Add (POST), not on Edit (PUT) — matches Admin behavior
+  document.addEventListener('submit', (e)=>{
+    if (e.target && e.target.id === 'voter-form') {
+      const mode = voterModal?.getAttribute('data-mode') || 'add';
+      if (mode === 'add') {
+        const desc = document.getElementById('face_descriptor_json');
+        if (!desc?.value) {
+          e.preventDefault();
+          say('Face capture is required. Please click "Capture Face".');
+          return;
+        }
+      }
+      stopCamera();
+    }
+  });
 </script>
-@endverbatim
+@endpush

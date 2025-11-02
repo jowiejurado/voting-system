@@ -103,13 +103,20 @@ class VoterController extends Controller
 		if (!empty($data['face_descriptor_json'])) {
 			try {
 				$arr = json_decode($data['face_descriptor_json'], true, 512, JSON_THROW_ON_ERROR);
-				if (is_array($arr) && count($arr) === 128 && array_reduce($arr, fn($ok, $v) => $ok && is_numeric($v), true)) {
+				$is128 = is_array($arr) && count($arr) === 128;
+				$allNum = $is128 && array_reduce($arr, fn($ok, $v) => $ok && is_numeric($v), true);
+
+				if ($is128 && $allNum) {
 					$descriptor = array_map('floatval', $arr);
 				} else {
-					return back()->withErrors(['face_descriptor_json' => 'Invalid face descriptor format.'])->withInput();
+					return back()->withErrors([
+						'face_descriptor_json' => 'Invalid face descriptor format.',
+					])->withInput();
 				}
 			} catch (\Throwable $e) {
-				return back()->withErrors(['face_descriptor_json' => 'Invalid face descriptor JSON.'])->withInput();
+				return back()->withErrors([
+					'face_descriptor_json' => 'Invalid face descriptor JSON.',
+				])->withInput();
 			}
 		}
 
@@ -119,7 +126,7 @@ class VoterController extends Controller
 			'phone_number'       => $data['phone_number'],
 			'member_id'          => $data['member_id'],
 			'organization_name'  => $data['organization_name'],
-			'face_descriptor'    => $descriptor, // Update descriptor if changed
+			'face_descriptor'    => $descriptor,
 		]);
 
 		return redirect()->route('admin.voters.index')
