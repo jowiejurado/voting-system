@@ -21,61 +21,81 @@ class BallotController extends Controller
 		$now = Carbon::now('Asia/Manila');
 		$today = $now->toDateString();
 
-		// Find active election window
 		$election = Election::query()
 			->whereDate('date', $today)
 			->whereTime('start_time', '<=', $now->format('H:i:s'))
 			->whereTime('end_time', '>=', $now->format('H:i:s'))
 			->first();
 
-		if (!$election) {
+		if ($election) {
+			$user = Auth::user();
+			$alreadyVoted = Vote::where('election_id', $election->id)
+				->where('user_id', $user->id)
+				->exists();
+
+			if ($alreadyVoted) {
+				return view('voter.ballot_already_voted', compact('election'));
+			}
+
+			$hasCandidates = Candidate::where('election_id', $election->id)->exists();
+			if (!$hasCandidates) {
+				return view('voter.no_candidates');
+			}
+
+			$positions = Position::query()
+				->whereHas('candidates', function ($q) use ($election) {
+					$q->where('election_id', $election->id);
+				})
+				->with(['candidates' => function ($q) use ($election) {
+					$q->where('election_id', $election->id)
+						->orderBy('last_name')
+						->orderBy('first_name');
+				}])
+				->orderBy('id')
+				->get();
+
+			$positionsPayload = $positions->map(function ($p) {
+				return [
+					'id'   => $p->id,
+					'name' => $p->name,
+					'max'  => $p->maximum_votes,
+					'candidates' => $p->candidates->map(function ($c) {
+						return [
+							'id'   => $c->id,
+							'name' => trim($c->last_name . ', ' . $c->first_name),
+							'org'  => $c->organization_name,
+						];
+					})->values()->all(),
+				];
+			})->values()->all();
+
+			return view('voter.ballot', compact('election', 'positions', 'positionsPayload'));
+		}
+
+		$nextElection = Election::query()
+			->whereDate('date', '>=', $today)
+			->orderBy('date')
+			->orderBy('start_time')
+			->first();
+
+		if (!$nextElection) {
 			return view('voter.ballot_closed');
 		}
 
-		// One-shot policy (optional)
-		$user = Auth::user();
-		$alreadyVoted = Vote::where('election_id', $election->id)
-			->where('user_id', $user->id)
-			->exists();
+		$startAt = Carbon::parse(
+			$nextElection->date . ' ' . $nextElection->start_time,
+			'Asia/Manila'
+		);
 
-		if ($alreadyVoted) {
-			return view('voter.ballot_already_voted', compact('election'));
+		if ($now->diffInDays($startAt, false) > 10) {
+			return view('voter.ballot_closed');
 		}
 
-		$hasCandidates = Candidate::where('election_id', $election->id)->exists();
-
-		if ($hasCandidates) {
-			return view('voter.no_candidates');
-		}
-
-		$positions = Position::query()
-			->whereHas('candidates', function ($q) use ($election) {
-				$q->where('election_id', $election->id);
-			})
-			->with(['candidates' => function ($q) use ($election) {
-				$q->where('election_id', $election->id)
-					->orderBy('last_name')
-					->orderBy('first_name');
-			}])
-			->orderBy('id')
-			->get();
-
-		$positionsPayload = $positions->map(function ($p) {
-			return [
-				'id'   => $p->id,
-				'name' => $p->name,
-				'max'  => $p->maximum_votes,
-				'candidates' => $p->candidates->map(function ($c) {
-					return [
-						'id'   => $c->id,
-						'name' => trim($c->last_name . ', ' . $c->first_name),
-						'org'  => $c->organization_name,
-					];
-				})->values()->all(),
-			];
-		})->values()->all();
-
-		return view('voter.ballot', compact('election', 'positions', 'positionsPayload'));
+		$startTimestampMs = $startAt->getTimestampMs();
+		return view('voter.ballot_countdown', [
+			'election'        => $nextElection,
+			'startTimestampMs' => $startTimestampMs,
+		]);
 	}
 
 	public function submit(SubmitBallotRequest $request)
