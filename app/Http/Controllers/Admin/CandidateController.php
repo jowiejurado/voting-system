@@ -14,16 +14,21 @@ class CandidateController extends Controller
 	{
 		$positions = Position::pluck('name', 'id');
 		$elections = Election::pluck('title', 'id');
+
 		$q = trim($request->get('q', ''));
 		$perPage = (int) $request->get('per_page', 10);
 		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
 		$candidates = \App\Models\Candidate::query()
+			->with(['position'])
 			->when($q !== '', function ($query) use ($q) {
 				$query->where(function ($sub) use ($q) {
-					$sub->where('last_name', 'like', "%{$q}%");
-					$sub->orWhere('first_name', 'like', "%{$q}%");
-					$sub->orWhere('organization_name', 'like', "%{$q}%");
+					$sub->where('last_name', 'like', "%{$q}%")
+						->orWhere('first_name', 'like', "%{$q}%")
+						->orWhere('organization_name', 'like', "%{$q}%")
+						->orWhereHas('position', function ($p) use ($q) {
+							$p->where('name', 'like', "%{$q}%");
+						});
 				});
 			})
 			->latest()
@@ -32,6 +37,7 @@ class CandidateController extends Controller
 
 		return view('admin.candidates.index', compact('candidates', 'q', 'perPage', 'positions', 'elections'));
 	}
+
 
 	public function store(Request $request)
 	{
@@ -46,7 +52,7 @@ class CandidateController extends Controller
 		]);
 
 		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		assert_admin_credentials($data['admin_id'], $data['password']);
 
 		Candidate::create([
 			'election_id'					=> $data['election'],
@@ -76,7 +82,7 @@ class CandidateController extends Controller
 		]);
 
 		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$candidate->update([
 			'election_id'					=> $data['election'],
