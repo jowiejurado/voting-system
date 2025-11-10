@@ -48,14 +48,6 @@
 											data-maximum_votes="{{ $position->maximum_votes }}">
 								Edit
 							</button>
-
-							<button type="button"
-											class="btn-delete bg-red-600 text-white px-3 py-1.5 text-sm rounded"
-											data-modal-open="#delete-modal"
-											data-id="{{ $position->id }}"
-											data-name="{{ $position->name }}">
-								Delete
-							</button>
             </td>
           </tr>
         @empty
@@ -119,24 +111,7 @@
   <x-ui.admin-auth class="pt-2" />
 </x-ui.modal>
 
-<x-ui.modal id="delete-modal"
-            title="Delete Position"
-            :form="['id'=>'delete-form','action'=>'','method'=>'POST','spoof'=>'DELETE','submitText'=>'Delete']"
-            size="max-w-[520px]">
-  <input type="hidden" name="__action" value="delete" data-clear-on-close>
-  <input type="hidden" name="__delete_id" id="__delete_id" data-clear-on-close>
-  <input type="hidden" name="__delete_name" id="__delete_name" data-clear-on-close>
-
-  <p class="text-xl text-center font-semibold">
-    Are you sure you want to delete
-    <span class="font-black text-red-500" id="del-position-name">this position</span>?
-  </p>
-
-  <x-ui.admin-auth class="pt-2" />
-</x-ui.modal>
-
 <meta name="position-update-url" content="{{ route('admin.positions.update', ':id') }}">
-<meta name="position-delete-url" content="{{ route('admin.positions.destroy', ':id') }}">
 @endsection
 
 @push('scripts')
@@ -197,7 +172,6 @@
 
   // ---- Your existing modal wiring below (unchanged) ----
   const updateTpl = document.querySelector('meta[name="position-update-url"]').content;
-  const deleteTpl = document.querySelector('meta[name="position-delete-url"]').content;
 
   const positionModal = document.getElementById('position-modal');
   const positionForm  = document.getElementById('position-form');
@@ -234,31 +208,7 @@
     }
   });
 
-  const deleteModal = document.getElementById('delete-modal');
-  const deleteForm  = document.getElementById('delete-form');
-  const delNameSpan = document.getElementById('del-position-name');
-  const delIdHidden = document.getElementById('__delete_id');
-  const delNameHidden = document.getElementById('__delete_name');
-
-  document.addEventListener('click', (e) => {
-    const delBtn = e.target.closest('.btn-delete');
-    if (!delBtn) return;
-
-    const id   = delBtn.dataset.id;
-    const name = delBtn.dataset.name || 'this position';
-
-    deleteForm.action = deleteTpl.replace(':id', id);
-    delIdHidden.value = id;
-    delNameHidden.value = name;
-    delNameSpan.textContent = name;
-  });
-
-  @if($errors->any() && old('__action') === 'delete')
-    window.Modal.openById('delete-modal');
-    deleteModal.querySelector('input[name="password"]').value = '';
-  @endif
-
-  @if($errors->any() && old('__action') !== 'delete')
+  @if($errors->any())
     window.Modal.openById('position-modal');
   @endif
 </script>

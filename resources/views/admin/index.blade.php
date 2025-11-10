@@ -64,15 +64,6 @@
 											data-phone_number="{{ $admin->phone_number }}">
 								Edit
 							</button>
-
-							<button type="button"
-											class="btn-delete bg-red-600 text-white px-3 py-1.5 text-sm rounded"
-											data-modal-open="#delete-modal"
-											data-id="{{ $admin->id }}"
-											data-firstname="{{ $admin->first_name }}"
-											data-lastname="{{ $admin->last_name }}">
-								Delete
-							</button>
             </td>
           </tr>
         @empty
@@ -173,25 +164,7 @@
   <x-ui.admin-auth class="pt-2" />
 </x-ui.modal>
 
-<x-ui.modal id="delete-modal"
-            title="Delete Admin"
-            :form="['id'=>'delete-form','action'=>'','method'=>'POST','spoof'=>'DELETE','submitText'=>'Delete']"
-            size="max-w-[520px]">
-  <input type="hidden" name="__action" value="delete" data-clear-on-close>
-  <input type="hidden" name="__delete_id" id="__delete_id" data-clear-on-close>
-  <input type="hidden" name="__delete_first_name" id="__delete_first_name" data-clear-on-close>
-	<input type="hidden" name="__delete_last_name" id="__delete_last_name" data-clear-on-close>
-
-  <p class="text-xl text-center font-semibold">
-    Are you sure you want to delete
-    <span class="font-black text-red-500" id="del-admin-name">this admin</span>?
-  </p>
-
-  <x-ui.admin-auth class="pt-2" />
-</x-ui.modal>
-
 <meta name="admin-update-url" content="{{ route('admin.update', ':id') }}">
-<meta name="admin-delete-url" content="{{ route('admin.destroy', ':id') }}">
 @endsection
 
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -250,7 +223,6 @@
   })();
 
   const updateTpl = document.querySelector('meta[name="admin-update-url"]').content;
-  const deleteTpl = document.querySelector('meta[name="admin-delete-url"]').content;
 
   const adminModal 		= document.getElementById('admin-modal');
   const voterForm  		= document.getElementById('admin-form');
@@ -291,33 +263,8 @@
     }
   });
 
-  const deleteModal = document.getElementById('delete-modal');
-  const deleteForm  = document.getElementById('delete-form');
-  const delFullNameSpan = document.getElementById('del-admin-name');
-  const delIdHidden = document.getElementById('__delete_id');
-  const delLastNameHidden = document.getElementById('__delete_last_name');
-	const delFirstNameHidden = document.getElementById('__delete_first_name');
 
-  document.addEventListener('click', (e) => {
-    const delBtn = e.target.closest('.btn-delete');
-    if (!delBtn) return;
-
-    const id   = delBtn.dataset.id;
-    const name = `${delBtn.dataset.firstname} ${delBtn.dataset.lastname}` || 'this admin';
-
-    deleteForm.action = deleteTpl.replace(':id', id);
-    delIdHidden.value = id;
-    delLastNameHidden.value = delBtn.dataset.lastname;
-		delFirstNameHidden.value = delBtn.dataset.firstname;
-    delFullNameSpan.textContent = name;
-  });
-
-  @if($errors->any() && old('__action') === 'delete')
-    window.Modal.openById('delete-modal');
-    deleteModal.querySelector('input[name="password"]').value = '';
-  @endif
-
-  @if($errors->any() && old('__action') !== 'delete')
+  @if($errors->any())
     window.Modal.openById('admin-modal');
   @endif
 </script>

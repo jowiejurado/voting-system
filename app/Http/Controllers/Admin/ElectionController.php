@@ -94,22 +94,4 @@ class ElectionController extends Controller
 				'buttonText' => 'Proceed'
 			]);
 	}
-
-	public function destroy(Request $request, Election $election)
-	{
-		$request->validate([
-			'admin_id' => 'required|string',
-			'password' => 'required|string',
-		]);
-
-		assert_current_user_is_admin();
-    assert_admin_credentials($request->input('admin_id'), $request->input('password'));
-
-		$election->delete();
-
-		return back()->with([
-			'success' => 'Removed Successfully',
-			'buttonText' => 'Proceed'
-		]);
-	}
 }

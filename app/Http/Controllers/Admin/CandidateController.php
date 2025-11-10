@@ -92,22 +92,4 @@ class CandidateController extends Controller
 				'buttonText' => 'Proceed'
 			]);
 	}
-
-	public function destroy(Request $request, Candidate $candidate)
-	{
-		$request->validate([
-			'admin_id' => 'required|string',
-			'password' => 'required|string',
-		]);
-
-		assert_current_user_is_admin();
-    assert_admin_credentials($request->input('admin_id'), $request->input('password'));
-
-		$candidate->delete();
-
-		return back()->with([
-			'success' => 'Removed Successfully',
-			'buttonText' => 'Proceed'
-		]);
-	}
 }

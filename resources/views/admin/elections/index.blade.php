@@ -60,14 +60,6 @@
   										data-end_time="{{ \Carbon\Carbon::parse($election->end_time)->format('H:i:s') }}">
 								Edit
 							</button>
-
-							<button type="button"
-											class="btn-delete bg-red-600 text-white px-3 py-1.5 text-sm rounded"
-											data-modal-open="#delete-modal"
-											data-id="{{ $election->id }}"
-											data-title="{{ $election->title }}">
-								Delete
-							</button>
             </td>
           </tr>
         @empty
@@ -153,24 +145,7 @@
   <x-ui.admin-auth class="pt-2" />
 </x-ui.modal>
 
-<x-ui.modal id="delete-modal"
-            title="Delete Position"
-            :form="['id'=>'delete-form','action'=>'','method'=>'POST','spoof'=>'DELETE','submitText'=>'Delete']"
-            size="max-w-[520px]">
-  <input type="hidden" name="__action" value="delete" data-clear-on-close>
-  <input type="hidden" name="__delete_id" id="__delete_id" data-clear-on-close>
-  <input type="hidden" name="__delete_title" id="__delete_title" data-clear-on-close>
-
-  <p class="text-xl text-center font-semibold">
-    Are you sure you want to delete
-    <span class="font-black text-red-500" id="del-election-title">this election</span>?
-  </p>
-
-  <x-ui.admin-auth class="pt-2" />
-</x-ui.modal>
-
 <meta name="election-update-url" content="{{ route('admin.elections.update', ':id') }}">
-<meta name="election-delete-url" content="{{ route('admin.elections.destroy', ':id') }}">
 @endsection
 
 @push('scripts')
@@ -231,7 +206,6 @@
 
   // ---- Your existing modal wiring below (unchanged) ----
   const updateTpl = document.querySelector('meta[name="election-update-url"]').content;
-  const deleteTpl = document.querySelector('meta[name="election-delete-url"]').content;
 
   const electionModal = document.getElementById('election-modal');
   const electionForm  = document.getElementById('election-form');
@@ -276,31 +250,7 @@
     }
   });
 
-  const deleteModal = document.getElementById('delete-modal');
-  const deleteForm  = document.getElementById('delete-form');
-  const delTitleSpan = document.getElementById('del-election-title');
-  const delIdHidden = document.getElementById('__delete_id');
-  const delTitleHidden = document.getElementById('__delete_title');
-
-  document.addEventListener('click', (e) => {
-    const delBtn = e.target.closest('.btn-delete');
-    if (!delBtn) return;
-
-    const id   = delBtn.dataset.id;
-    const title = delBtn.dataset.title || 'this election';
-
-    deleteForm.action = deleteTpl.replace(':id', id);
-    delIdHidden.value = id;
-    delTitleHidden.value = title;
-    delTitleSpan.textContent = title;
-  });
-
-  @if($errors->any() && old('__action') === 'delete')
-    window.Modal.openById('delete-modal');
-    deleteModal.querySelector('input[name="password"]').value = '';
-  @endif
-
-  @if($errors->any() && old('__action') !== 'delete')
+  @if($errors->any())
     window.Modal.openById('election-modal');
   @endif
 </script>

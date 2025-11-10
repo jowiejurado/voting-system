@@ -55,15 +55,6 @@
                       data-organization_name="{{ $voter->organization_name }}">
                 Edit
               </button>
-
-              <button type="button"
-                      class="btn-delete bg-red-600 text-white px-3 py-1.5 text-sm rounded"
-                      data-modal-open="#delete-modal"
-                      data-id="{{ $voter->id }}"
-                      data-firstname="{{ $voter->first_name }}"
-                      data-lastname="{{ $voter->last_name }}">
-                Delete
-              </button>
             </td>
           </tr>
         @empty
@@ -185,28 +176,8 @@
   {{-- /SCROLLABLE BODY --}}
 </x-ui.modal>
 
-{{-- ================== DELETE MODAL ================== --}}
-<x-ui.modal id="delete-modal"
-            title="Delete Voter"
-            :form="['id'=>'delete-form','action'=>'','method'=>'POST','spoof'=>'DELETE','submitText'=>'Delete']"
-            size="max-w-[520px]">
-  <input type="hidden" name="__action" value="delete" data-clear-on-close>
-  <input type="hidden" name="__delete_id" id="__delete_id" data-clear-on-close>
-  <input type="hidden" name="__delete_first_name" id="__delete_first_name" data-clear-on-close>
-  <input type="hidden" name="__delete_last_name" id="__delete_last_name" data-clear-on-close>
-
-  <div class="max-h-[70vh] overflow-y-auto pr-2 space-y-4">
-    <p class="text-xl text-center font-semibold">
-      Are you sure you want to delete
-      <span class="font-black text-red-500" id="del-voter-name">this voter</span>?
-    </p>
-    <x-ui.admin-auth class="pt-2" />
-  </div>
-</x-ui.modal>
-
 <meta name="voter-store-url" content="{{ route('admin.voters.store') }}">
 <meta name="voter-update-url" content="{{ route('admin.voters.update', ':id') }}">
-<meta name="voter-delete-url" content="{{ route('admin.voters.destroy', ':id') }}">
 @endsection
 
 {{-- Face API --}}
@@ -364,9 +335,8 @@
     pager.addEventListener('click', (e)=>{ const a=e.target.closest('a'); if(!a) return; showTableLoading(); });
   })();
 
-  // ===== Modal form wiring (add/edit/delete)
+  // ===== Modal form wiring (add/edit)
   const updateTpl = document.querySelector('meta[name="voter-update-url"]')?.content;
-  const deleteTpl = document.querySelector('meta[name="voter-delete-url"]')?.content;
   const storeUrl  = document.querySelector('meta[name="voter-store-url"]')?.content;
 
   const voterModal   = document.getElementById('voter-modal');
@@ -414,23 +384,6 @@
       voterModal?.setAttribute('data-mode', 'edit');
       return;
     }
-  });
-
-  const deleteForm  = document.getElementById('delete-form');
-  const delFullNameSpan = document.getElementById('del-voter-name');
-  const delIdHidden     = document.getElementById('__delete_id');
-  const delLastNameHidden = document.getElementById('__delete_last_name');
-  const delFirstNameHidden = document.getElementById('__delete_first_name');
-
-  document.addEventListener('click', (e)=>{
-    const delBtn = e.target.closest('.btn-delete'); if(!delBtn) return;
-    const id   = delBtn.dataset.id;
-    const name = `${delBtn.dataset.firstname} ${delBtn.dataset.lastname}` || 'this voter';
-    deleteForm.action = deleteTpl.replace(':id', id);
-    if(delIdHidden)        delIdHidden.value = id;
-    if(delLastNameHidden)  delLastNameHidden.value = delBtn.dataset.lastname;
-    if(delFirstNameHidden) delFirstNameHidden.value = delBtn.dataset.firstname;
-    if(delFullNameSpan)    delFullNameSpan.textContent = name;
   });
 
   // Require face only on Add (POST), not on Edit (PUT) — matches Admin behavior
