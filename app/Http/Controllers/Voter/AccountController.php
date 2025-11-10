@@ -34,7 +34,7 @@ class AccountController extends Controller
 		if (!Hash::check($request->current_password, $user->password)) {
 			return back()->with('error', 'Current password incorrect');
 		}
-		if (!$this->otp->verify($user, $request->code, 'change_password')) {
+		if (!$this->otp->verifyOtp($user, $request->code, 'change_password')) {
 			return back()->with('error', 'Invalid code');
 		}
 		$user->password = Hash::make($request->new_password);

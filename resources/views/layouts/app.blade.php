@@ -343,7 +343,7 @@
 						});
 
 						const data = await res.json().catch(()=>({ ok:false }));
-						if (!res.ok || !data.ok) throw new Error(data.message || 'Failed to send OTP');
+						if (!res.ok) throw new Error(data.message || 'Failed to send OTP');
 
 						// success: enable OTP input and start cooldown
 						otpInput.disabled = false;

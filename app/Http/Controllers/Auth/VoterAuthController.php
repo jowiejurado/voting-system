@@ -123,7 +123,7 @@ class VoterAuthController extends Controller
 			]);
     }
 
-    if (!$this->otpService->verifyOtp($user, $request->otp)) {
+    if (!$this->otpService->verifyOtp($user, $request->otp, 'change_password')) {
 			return back()->with([
 				'error' => 'Invalid Code',
 				'buttonText' => 'TRY AGAIN',

@@ -100,7 +100,7 @@ class AdminAuthController extends Controller
 			]);
 		}
 
-		$this->otpService->sendOTP($user);
+		$this->otpService->sendOTP($user, 'change-password');
 
 		return back()->with([
 			'success' => 'OTP has been sent',
@@ -126,7 +126,7 @@ class AdminAuthController extends Controller
 			]);
 		}
 
-		if (!$this->otpService->verifyOtp($user, $request->otp)) {
+		if (!$this->otpService->verifyOtp($user, $request->otp, 'change-password')) {
 			return back()->with([
 				'error' => 'Invalid Code',
 				'buttonText' => 'TRY AGAIN',
