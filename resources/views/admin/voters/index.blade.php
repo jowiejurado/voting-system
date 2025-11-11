@@ -108,7 +108,9 @@
       <input type="text" name="first_name" id="first_name"
              class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
              value="{{ old('first_name') }}" placeholder="e.g., Juan" required>
-      @error('first_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+      @error('first_name')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+      @enderror
     </div>
 
     <div>
@@ -116,7 +118,9 @@
       <input type="text" name="last_name" id="last_name"
              class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
              value="{{ old('last_name') }}" placeholder="e.g., Dela Cruz" required>
-      @error('last_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+      @error('last_name')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+      @enderror
     </div>
 
     <div>
@@ -124,7 +128,9 @@
       <input type="text" name="phone_number" id="phone_number"
              class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
              value="{{ old('phone_number') }}" placeholder="e.g., +639123456789, 09123456789" required>
-      @error('phone_number') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+      @error('phone_number')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+      @enderror
     </div>
 
     <div>
@@ -132,16 +138,19 @@
       <input type="text" name="organization_name" id="organization_name"
              class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
              value="{{ old('organization_name') }}" placeholder="e.g., IT, Marketing" required>
-      @error('organization_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+      @error('organization_name')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+      @enderror
     </div>
 
-    {{-- Optional: show Member ID when editing --}}
     <div>
       <label class="block text-sm mb-1">Member ID</label>
       <input type="text" name="member_id" id="member_id"
              class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
              value="{{ old('member_id') }}" placeholder="e.g., M-000001" readonly>
-      @error('member_id') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+      @error('member_id')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+      @enderror
     </div>
 
     {{-- Face capture UI (required on Add; optional on Edit) --}}
@@ -152,9 +161,7 @@
       </div>
 
       <div class="flex items-center gap-4">
-        {{-- live preview --}}
         <video id="voter_cam" autoplay playsinline muted width="240" height="180" class="bg-black rounded"></video>
-        {{-- snapshot preview --}}
         <canvas id="voter_snap" width="240" height="180" class="hidden rounded border"></canvas>
 
         <div class="flex flex-col gap-2">
@@ -171,6 +178,59 @@
       </div>
     </div>
 
+    <div class="mt-3 border-2 border-gray-300 rounded-xl p-3">
+			<div class="flex items-center justify-between mb-2">
+				<label class="block text-sm font-semibold">Security Questions</label>
+				<span class="text-xs text-gray-500">Min 1 • Max 3 • Answers ≥ 2 chars</span>
+			</div>
+
+			@php($sq = old('security_questions'))
+			<div id="qa-list" class="flex flex-col gap-3">
+				@if(is_array($sq) && count($sq))
+					@foreach($sq as $i => $qa)
+						<div class="qa-row flex gap-2">
+							<input name="security_questions[{{ $i }}][question]" type="text" required maxlength="255"
+										value="{{ $qa['question'] ?? '' }}" placeholder="e.g., What is your favorite color?"
+										class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none">
+							<input name="security_questions[{{ $i }}][answer]" type="text" required minlength="2" maxlength="255"
+										value="{{ $qa['answer'] ?? '' }}" placeholder="Answer (min 2 chars)"
+										class="w-56 border-2 border-gray-400 py-2 px-3 outline-none">
+							<button type="button" class="btn-remove text-sm px-3 rounded-2xl bg-amber-600 text-white">Remove</button>
+						</div>
+					@endforeach
+				@else
+					<div class="qa-row flex gap-2">
+						<input name="security_questions[0][question]" type="text" required maxlength="255"
+									placeholder="e.g., What is your favorite color?"
+									class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none">
+						<input name="security_questions[0][answer]" type="text" required minlength="2" maxlength="255"
+									placeholder="Answer (min 2 chars)"
+									class="w-56 border-2 border-gray-400 py-2 px-3 outline-none">
+						<button type="button" class="btn-remove text-sm px-2 rounded-md bg-red-600 text-white">
+							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+								<path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+							</svg>
+						</button>
+					</div>
+				@endif
+			</div>
+
+			<div class="flex items-center gap-3 mt-3">
+				<button id="btn-add-qa" type="button" class="px-4 py-2 rounded-md bg-black text-white">Add Question</button>
+				<span id="qa-hint" class="text-xs text-gray-600">Keep answers memorable but not guessable.</span>
+			</div>
+
+			@error('security_questions')
+				<div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+			@enderror
+			@error('security_questions.*.question')
+				<div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+			@enderror
+			@error('security_questions.*.answer')
+				<div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+			@enderror
+		</div>
+
     <x-ui.admin-auth class="pt-2" />
   </div>
   {{-- /SCROLLABLE BODY --}}
@@ -180,10 +240,10 @@
 <meta name="voter-update-url" content="{{ route('admin.voters.update', ':id') }}">
 @endsection
 
+@push('scripts')
 {{-- Face API --}}
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
-@push('scripts')
 <script>
   function say(t){ const s=document.getElementById('face-status'); if(s) s.textContent=t; }
 
@@ -281,7 +341,7 @@
     return Array.from(det.descriptor);
   }
 
-  // Open modal → start camera
+
   document.addEventListener('click', (e) => {
     if (e.target.closest('#btn-add') || e.target.closest('.btn-edit')) {
       resetFaceUI();
@@ -289,7 +349,7 @@
     }
   });
 
-  // Camera buttons
+
   document.addEventListener('click', (e) => {
     if (e.target.id === 'btn-capture-face') (async () => {
       hydrate();
@@ -313,7 +373,6 @@
     }
   });
 
-  // ---------- Table/search UI ----------
   function showTableLoading(){ const el=document.getElementById('table-loading'); if(el) el.classList.remove('hidden'); }
   window.addEventListener('pageshow', (e)=>{ if(e.persisted){ const el=document.getElementById('table-loading'); if(el) el.classList.add('hidden'); } });
 
@@ -386,7 +445,6 @@
     }
   });
 
-  // Require face only on Add (POST), not on Edit (PUT) — matches Admin behavior
   document.addEventListener('submit', (e)=>{
     if (e.target && e.target.id === 'voter-form') {
       const mode = voterModal?.getAttribute('data-mode') || 'add';
@@ -401,5 +459,66 @@
       stopCamera();
     }
   });
+
+  (function(){
+    const list = document.getElementById('qa-list');
+    const addBtn = document.getElementById('btn-add-qa');
+    const MAX = 3, MIN = 1;
+
+    function countRows(){ return list.querySelectorAll('.qa-row').length; }
+
+    function updateButtons(){
+      if (!addBtn) return;
+      addBtn.disabled = countRows() >= MAX;
+      list.querySelectorAll('.btn-remove').forEach(btn=>{
+        btn.disabled = countRows() <= MIN;
+      });
+    }
+
+    function rowTemplate(i){
+      return `
+      <div class="qa-row flex gap-2">
+        <input name="security_questions[${i}][question]" type="text" required maxlength="255"
+               placeholder="e.g., What is your favorite color?"
+               class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none" />
+        <input name="security_questions[${i}][answer]" type="text" required minlength="2" maxlength="255"
+               placeholder="Answer (min 2 chars)"
+               class="w-56 border-2 border-gray-400 py-2 px-3 outline-none" />
+        <button type="button" class="btn-remove text-sm px-2 rounded-md bg-red-600 text-white">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+						<path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+					</svg>
+				</button>
+      </div>`;
+    }
+
+    addBtn?.addEventListener('click', ()=>{
+      const n = countRows();
+      if (n >= MAX) return;
+      list.insertAdjacentHTML('beforeend', rowTemplate(n));
+      attachHandlers();
+      updateButtons();
+    });
+
+    function attachHandlers(){
+      list.querySelectorAll('.btn-remove').forEach(btn=>{
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', ()=>{
+          if (countRows() <= MIN) return;
+          btn.closest('.qa-row')?.remove();
+          Array.from(list.querySelectorAll('.qa-row')).forEach((row, idx)=>{
+            row.querySelectorAll('input').forEach(inp=>{
+              inp.name = inp.name.replace(/security_questions\[\d+]/, `security_questions[${idx}]`);
+            });
+          });
+          updateButtons();
+        });
+      });
+    }
+
+    attachHandlers();
+    updateButtons();
+  })();
 </script>
 @endpush

@@ -15,7 +15,7 @@ use App\Http\Controllers\Voter\BallotController;
 use App\Http\Controllers\Voter\VoterFaceController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'home');
+Route::view('/', 'home')->name('home');
 Route::apiResource('admin', AdminController::class)->except('show');
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -50,6 +50,10 @@ Route::prefix('voter')->name('voter.')->group(function () {
 
 	Route::get('otp', [VoterAuthController::class, 'showOtp'])->name('otp');
 	Route::post('otp', [VoterAuthController::class, 'verifyOtp'])->name('otp.verify');
+
+  Route::get('/verify-method', [VoterAuthController::class, 'showVerifyMethod'])->name('verify.method');
+  Route::get('/security', [VoterAuthController::class, 'showSecurityQuestion'])->name('security.show');
+  Route::post('/security', [VoterAuthController::class, 'verifySecurityAnswer'])->name('security.verify');
 
 	Route::post('logout', [VoterAuthController::class, 'logout'])->name('logout');
 

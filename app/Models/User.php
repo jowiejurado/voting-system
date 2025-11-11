@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -56,17 +57,22 @@ class User extends Authenticatable
 			'has_voted' => 'boolean',
 			'is_active' => 'boolean',
 			'last_signed_in' => 'datetime',
-    	'last_signed_out' => 'datetime',
+			'last_signed_out' => 'datetime',
 		];
 	}
 
-	public function votes()
+	public function votes(): HasMany
 	{
-		return $this->hasMany(\App\Models\Vote::class);
+		return $this->hasMany(Vote::class);
 	}
 
-	public function otpCodes()
+	public function otpCodes(): HasMany
 	{
-		return $this->hasMany(\App\Models\OtpCode::class);
+		return $this->hasMany(OtpCode::class);
+	}
+
+	public function securityQuestions(): HasMany
+	{
+		return $this->hasMany(UserSecurityQuestion::class);
 	}
 }

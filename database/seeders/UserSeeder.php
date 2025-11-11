@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 use App\Enums\UserType;
 use App\Models\User;
+use App\Models\UserSecurityQuestion;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
 {
@@ -49,12 +51,27 @@ class UserSeeder extends Seeder
 		]);
 
 		// Voters
-		User::firstOrCreate(['member_id' => 'psi0000'], [
-			'last_name'			=> 'Dela Cruz',
-			'first_name'		=> 'Juan',
-			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '09275517245',
-			'type' 					=> UserType::VOTER->value,
-		]);
+		DB::transaction(function () {
+			$voter = User::firstOrCreate(['member_id' => 'psi0000'], [
+				'last_name'     => 'Dela Cruz',
+				'first_name'    => 'Juan',
+				'password'      => Hash::make('P@ssw0rd!@#'),
+				'phone_number'  => '09275517245',
+				'type'          => UserType::VOTER->value,
+			]);
+
+			$questions = [
+				['question' => 'What was the name of your first pet?', 'answer' => 'Brownie'],
+				['question' => 'In what city you were born?',          'answer' => 'Manila'],
+				['question' => 'What was your childhood nickname?',     'answer' => 'Totoy'],
+			];
+
+			foreach ($questions as $qa) {
+				$voter->securityQuestions()->updateOrCreate(
+					['question' => $qa['question']],
+					['answer_hash'   => Hash::make($qa['answer'])]
+				);
+			}
+		});
 	}
 }

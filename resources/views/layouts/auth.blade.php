@@ -48,10 +48,18 @@
 		</script>
 	@endif
 
-	<main
-		class="min-h-screen flex items-center"
-    style="background-image:url('{{ asset('images/bg-image.jpg') }}'); background-size:cover; background-position:center;">
-    @yield('content')
+	<main class="relative" style="background-image:url('{{ asset('images/bg-image.jpg') }}'); background-size:cover; background-position:center;">
+		@if(Route::currentRouteName() !== 'home')
+			<a href="{{ route('home') }}" class="absolute m-5 rounded-full p-2 cursor-pointer text-black bg-white flex items-center justify-center text-center">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+				</svg>
+			</a>
+		@endif
+
+		<div class="min-h-screen flex items-center">
+			@yield('content')
+		</div>
   </main>
 
 	@stack('scripts')
