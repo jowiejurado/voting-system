@@ -75,7 +75,8 @@
                         data-modal-open="#system-admin-modal"
                         data-id="{{ $admin->id }}"
                         data-first_name="{{ $admin->first_name }}"
-                        data-last_name="{{ $admin->last_name }}">
+                        data-last_name="{{ $admin->last_name }}"
+												data-phone_number="{{ $admin->phone_number }}">
                   Edit
                 </button>
               @else
@@ -134,7 +135,7 @@
             title="Add Admin"
             :form="['id'=>'admin-form','action'=>route('admin.store'),'method'=>'POST','submitText'=>'Submit']">
   <input type="hidden" name="_method" id="method-field" value="POST" data-clear-on-close>
-  <input type="hidden" name="type" value="admin" data-clear-on-close>
+   <input type="hidden" name="user_type" value="admin" data-clear-on-close>
 
   <div>
     <label class="block text-sm mb-1" for="first_name">First Name</label>
@@ -199,7 +200,7 @@
             title="Add System Admin"
             :form="['id'=>'system-admin-form','action'=>route('admin.store'),'method'=>'POST','submitText'=>'Submit']">
   <input type="hidden" name="_method" id="system-method-field" value="POST" data-clear-on-close>
-  <input type="hidden" name="type" value="system-admin" data-clear-on-close>
+  <input type="hidden" name="user_type" value="system-admin" data-clear-on-close>
 
   <div>
     <label class="block text-sm mb-1" for="system_first_name">First Name</label>
@@ -215,6 +216,14 @@
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('last_name') }}" placeholder="e.g., Dela Cruz" required>
     @error('last_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
+	<div>
+    <label class="block text-sm mb-1" for="system_phone_number">Phone Number</label>
+    <input type="text" name="phone_number" id="system_phone_number"
+           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('phone_number') }}" placeholder="e.g., +639123456789, 09123456789" required>
+    @error('phone_number') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
   {{-- NOTE: No face capture, no OTP, no security questions here --}}
@@ -300,6 +309,7 @@
 
   const systemFirstNameInp = document.getElementById('system_first_name');
   const systemLastNameInp  = document.getElementById('system_last_name');
+	const systemPhoneNumberInp  = document.getElementById('system_phone_number');
 
   document.addEventListener('click', (e) => {
     // Add Admin
@@ -342,6 +352,7 @@
       if (systemSubmitBtn) systemSubmitBtn.textContent = 'Submit';
       if (systemFirstNameInp) systemFirstNameInp.value = '';
       if (systemLastNameInp) systemLastNameInp.value  = '';
+			if (systemPhoneNumberInp) systemPhoneNumberInp.value  = '';
       return;
     }
 
@@ -359,17 +370,18 @@
 
       if (systemFirstNameInp) systemFirstNameInp.value = editSystemBtn.dataset.first_name || '';
       if (systemLastNameInp)  systemLastNameInp.value  = editSystemBtn.dataset.last_name || '';
+			if (systemPhoneNumberInp)  systemPhoneNumberInp.value  = editSystemBtn.dataset.phone_number || '';
       return;
     }
   });
 
-  @if($errors->any())
-    @if(old('type') === 'system-admin')
-      window.Modal.openById('system-admin-modal');
-    @else
-      window.Modal.openById('admin-modal');
-    @endif
-  @endif
+	@if($errors->any())
+		@if(old('user_type') === 'system-admin')
+			window.Modal.openById('system-admin-modal');
+		@else
+			window.Modal.openById('admin-modal');
+		@endif
+	@endif
 </script>
 
 {{-- ===== Face capture script (ADMIN ONLY FORM) ===== --}}
