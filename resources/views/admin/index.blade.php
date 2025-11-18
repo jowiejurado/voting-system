@@ -8,62 +8,88 @@
     <h1 class="text-2xl font-black text-[#0b252a]">Admin</h1>
     <div class="flex items-center">
 
-			@if (Auth::user() && Auth::user()->type == 'system-admin')
-				<button
-					type="button" id="btn-add"
-					class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
-					data-modal-open="#admin-modal">
-					Add Admin
-				</button>
-			@endif
+      @if (Auth::user() && Auth::user()->type == 'system-admin')
+        <button
+          type="button" id="btn-add"
+          class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
+          data-modal-open="#admin-modal">
+          Add Admin
+        </button>
+      @endif
 
-			<form id="search-form" method="GET" action="{{ route('admin.index') }}"
-						class="flex items-center gap-x-2 ml-auto">
-				<label for="search">Search:</label>
-				<input id="search" name="q" type="search"
-							value="{{ $q ?? '' }}"
-							placeholder="Type keywords..."
-							class="border-2 border-gray-300 py-1 px-2 outline-none"
-							autofocus />
-			</form>
-		</div>
+      @if (Auth::user() && Auth::user()->type == 'system-admin')
+        <button
+          type="button" id="btn-add-system"
+          class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white ml-4"
+          data-modal-open="#system-admin-modal">
+          Add System Admin
+        </button>
+      @endif
+
+      <form id="search-form" method="GET" action="{{ route('admin.index') }}"
+            class="flex items-center gap-x-2 ml-auto">
+        <label for="search">Search:</label>
+        <input id="search" name="q" type="search"
+               value="{{ $q ?? '' }}"
+               placeholder="Type keywords..."
+               class="border-2 border-gray-300 py-1 px-2 outline-none"
+               autofocus />
+      </form>
+    </div>
   </div>
 
-	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
-		<table class="table-fixed w-full" id="admins-table">
+  <div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
+    <table class="table-fixed w-full" id="admins-table">
       <thead>
         <tr class="border-b-2 border-gray-400">
-					<th class="py-3 text-center">Last Name</th>
+          <th class="py-3 text-center">Last Name</th>
           <th class="py-3 text-center">First Name</th>
-					<th class="py-3 text-center">Admin ID</th>
-					<th class="py-3 text-center">Last Signed In & Out</th>
+          <th class="py-3 text-center">Admin ID</th>
+          <th class="py-3 text-center">Role</th>
+          <th class="py-3 text-center">Last Signed In & Out</th>
           <th class="w-56 py-3 text-center">Tools</th>
         </tr>
       </thead>
       <tbody class="text-center">
         @forelse($admins as $admin)
           <tr class="border-b-2 border-gray-400 last:border-b-0">
-						<td class="py-3 px-6">{{ $admin->last_name }}</td>
-						<td class="py-3 px-6">{{ $admin->first_name }}</td>
-						<td class="py-3 px-6">{{ $admin->admin_id }}</td>
-						<td class="py-3 px-6 flex flex-col items-center text-center">
-							<span>
-								{{ $admin->last_signed_in ? 'IN - ' . optional($admin->last_signed_in)->format('d/m/Y Hi') . 'H' : '' }}
-							</span>
-							<span>
-								{{ $admin->last_signed_out ? 'OUT - ' . optional($admin->last_signed_out)->format('d/m/Y Hi') . 'H' : '' }}
-							</span>
-						</td>
+            <td class="py-3 px-6">{{ $admin->last_name }}</td>
+            <td class="py-3 px-6">{{ $admin->first_name }}</td>
+            <td class="py-3 px-6">{{ $admin->admin_id }}</td>
+            <td class="py-3 px-6">
+              {{ $admin->type === 'system-admin' ? 'System Admin' : 'Admin' }}
+            </td>
+            <td class="py-3 px-6 flex flex-col items-center text-center">
+              <span>
+                {{ $admin->last_signed_in ? 'IN - ' . optional($admin->last_signed_in)->format('d/m/Y Hi') . 'H' : '' }}
+              </span>
+              <span>
+                {{ $admin->last_signed_out ? 'OUT - ' . optional($admin->last_signed_out)->format('d/m/Y Hi') . 'H' : '' }}
+              </span>
+            </td>
             <td class="py-3 text-center">
-              <button type="button"
-											class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
-											data-modal-open="#admin-modal"
-											data-id="{{ $admin->id }}"
-											data-first_name="{{ $admin->first_name }}"
-											data-last_name="{{ $admin->last_name }}"
-											data-phone_number="{{ $admin->phone_number }}">
-								Edit
-							</button>
+              @if($admin->type === 'system-admin')
+                {{-- Edit System Admin (no face / OTP / sec question) --}}
+                <button type="button"
+                        class="btn-edit-system bg-green-600 text-white px-3 py-[6px] text-sm rounded"
+                        data-modal-open="#system-admin-modal"
+                        data-id="{{ $admin->id }}"
+                        data-first_name="{{ $admin->first_name }}"
+                        data-last_name="{{ $admin->last_name }}">
+                  Edit
+                </button>
+              @else
+                {{-- Edit Admin (with face capture & admin-auth) --}}
+                <button type="button"
+                        class="btn-edit-admin bg-green-600 text-white px-3 py-[6px] text-sm rounded"
+                        data-modal-open="#admin-modal"
+                        data-id="{{ $admin->id }}"
+                        data-first_name="{{ $admin->first_name }}"
+                        data-last_name="{{ $admin->last_name }}"
+                        data-phone_number="{{ $admin->phone_number }}">
+                  Edit
+                </button>
+              @endif
             </td>
           </tr>
         @empty
@@ -73,59 +99,61 @@
         @endforelse
       </tbody>
     </table>
-		<div id="table-loading"
-			class="hidden absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-			<div class="w-10 h-10 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
-		</div>
+    <div id="table-loading"
+      class="hidden absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+      <div class="w-10 h-10 border-4 border-gray-300 border-t-black rounded-full animate-spin"></div>
+    </div>
   </div>
 
-	<div class="flex items-center justify-end gap-x-5 px-4 py-3">
-		<form id="per-page-form" method="GET" action="{{ route('admin.index') }}"
-					class="flex gap-x-2 items-center">
-			<label class="text-sm text-gray-600">Items per page:</label>
-			<input type="hidden" name="q" value="{{ $q }}">
-			<input type="hidden" name="page" value="1">
-			<select name="per_page" class="border-2 border-gray-300 py-1 px-2"
-							onchange="this.form.submit()">
-				@foreach([5,10,15,25,50] as $n)
-					<option value="{{ $n }}" @selected(($perPage ?? 10) == $n)>{{ $n }}</option>
-				@endforeach
-			</select>
-		</form>
+  <div class="flex items-center justify-end gap-x-5 px-4 py-3">
+    <form id="per-page-form" method="GET" action="{{ route('admin.index') }}"
+          class="flex gap-x-2 items-center">
+      <label class="text-sm text-gray-600">Items per page:</label>
+      <input type="hidden" name="q" value="{{ $q }}">
+      <input type="hidden" name="page" value="1">
+      <select name="per_page" class="border-2 border-gray-300 py-1 px-2"
+              onchange="this.form.submit()">
+        @foreach([5,10,15,25,50] as $n)
+          <option value="{{ $n }}" @selected(($perPage ?? 10) == $n)>{{ $n }}</option>
+        @endforeach
+      </select>
+    </form>
 
-		<div class="text-sm text-gray-600">
-			Showing {{ $admins->firstItem() ?? 0 }} – {{ $admins->lastItem() ?? 0 }} of {{ $admins->total() }}
-		</div>
+    <div class="text-sm text-gray-600">
+      Showing {{ $admins->firstItem() ?? 0 }} – {{ $admins->lastItem() ?? 0 }} of {{ $admins->total() }}
+    </div>
 
-		<div id="pagination">
-			{{ $admins->onEachSide(1)->links('vendor.pagination.always') }}
-		</div>
-	</div>
+    <div id="pagination">
+      {{ $admins->onEachSide(1)->links('vendor.pagination.always') }}
+    </div>
+  </div>
 </div>
 
+{{-- ========== ADMIN MODAL (WITH FACE & AUTH) ========== --}}
 <x-ui.modal id="admin-modal"
             title="Add Admin"
             :form="['id'=>'admin-form','action'=>route('admin.store'),'method'=>'POST','submitText'=>'Submit']">
   <input type="hidden" name="_method" id="method-field" value="POST" data-clear-on-close>
+  <input type="hidden" name="type" value="admin" data-clear-on-close>
 
   <div>
-    <label class="block text-sm mb-1">First Name</label>
+    <label class="block text-sm mb-1" for="first_name">First Name</label>
     <input type="text" name="first_name" id="first_name"
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('first_name') }}" placeholder="e.g., Juan" required>
     @error('first_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
-	<div>
-    <label class="block text-sm mb-1">Last Name</label>
+  <div>
+    <label class="block text-sm mb-1" for="last_name">Last Name</label>
     <input type="text" name="last_name" id="last_name"
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('last_name') }}" placeholder="e.g., Dela Cruz" required>
     @error('last_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
-	<div>
-    <label class="block text-sm mb-1">Phone Number</label>
+  <div>
+    <label class="block text-sm mb-1" for="phone_number">Phone Number</label>
     <input type="text" name="phone_number" id="phone_number"
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('phone_number') }}" placeholder="e.g., +639123456789, 09123456789" required>
@@ -134,6 +162,7 @@
 
   <input type="hidden" name="face_descriptor_json" id="face_descriptor_json_admin" data-clear-on-close>
 
+  {{-- ===== Face registration (ADMIN ONLY) ===== --}}
   <div class="mt-3 border-2 border-gray-300 rounded-xl p-3">
     <div class="flex items-center justify-between mb-2">
       <label class="block text-sm font-semibold">Face Capture (required)</label>
@@ -161,7 +190,35 @@
   </div>
   {{-- ===== /Face registration ===== --}}
 
+  {{-- OTP / security question block (ADMIN ONLY) --}}
   <x-ui.admin-auth class="pt-2" />
+</x-ui.modal>
+
+{{-- ========== SYSTEM ADMIN MODAL (NO FACE / OTP / SEQ Q) ========== --}}
+<x-ui.modal id="system-admin-modal"
+            title="Add System Admin"
+            :form="['id'=>'system-admin-form','action'=>route('admin.store'),'method'=>'POST','submitText'=>'Submit']">
+  <input type="hidden" name="_method" id="system-method-field" value="POST" data-clear-on-close>
+  <input type="hidden" name="type" value="system-admin" data-clear-on-close>
+
+  <div>
+    <label class="block text-sm mb-1" for="system_first_name">First Name</label>
+    <input type="text" name="first_name" id="system_first_name"
+           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('first_name') }}" placeholder="e.g., Juan" required>
+    @error('first_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
+  <div>
+    <label class="block text-sm mb-1" for="system_last_name">Last Name</label>
+    <input type="text" name="last_name" id="system_last_name"
+           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('last_name') }}" placeholder="e.g., Dela Cruz" required>
+    @error('last_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
+  {{-- NOTE: No face capture, no OTP, no security questions here --}}
+	<x-ui.admin-auth class="pt-2" />
 </x-ui.modal>
 
 <meta name="admin-update-url" content="{{ route('admin.update', ':id') }}">
@@ -171,7 +228,7 @@
 
 @push('scripts')
 <script>
-	function showTableLoading() {
+  function showTableLoading() {
     const el = document.getElementById('table-loading');
     if (el) el.classList.remove('hidden');
   }
@@ -183,7 +240,7 @@
     }
   });
 
- (function(){
+  (function(){
     const input = document.getElementById('search');
     const form  = document.getElementById('search-form');
     if (!input || !form) return;
@@ -201,14 +258,13 @@
     try { input.setSelectionRange(len, len); } catch(e){}
   })();
 
-	(function(){
+  (function(){
     const perPageForm = document.getElementById('per-page-form');
     if (!perPageForm) return;
     const select = perPageForm.querySelector('select[name="per_page"]');
     if (!select) return;
     select.addEventListener('change', () => {
       showTableLoading();
-
     });
   })();
 
@@ -224,51 +280,99 @@
 
   const updateTpl = document.querySelector('meta[name="admin-update-url"]').content;
 
-  const adminModal 		= document.getElementById('admin-modal');
-  const voterForm  		= document.getElementById('admin-form');
+  // ==== Admin modal (with face) ====
+  const adminModal    = document.getElementById('admin-modal');
+  const adminForm     = document.getElementById('admin-form');
   const methodField   = document.getElementById('method-field');
-  const modalTitleEl  = adminModal.querySelector('[data-modal-title]');
-  const submitBtn     = adminModal.querySelector('[data-modal-submit]');
+  const modalTitleEl  = adminModal ? adminModal.querySelector('[data-modal-title]') : null;
+  const submitBtn     = adminModal ? adminModal.querySelector('[data-modal-submit]') : null;
 
   const firstNameInp    = document.getElementById('first_name');
   const lastNameInp     = document.getElementById('last_name');
-	const phoneNumberInp  = document.getElementById('phone_number');
+  const phoneNumberInp  = document.getElementById('phone_number');
+
+  // ==== System admin modal (no face) ====
+  const systemModal       = document.getElementById('system-admin-modal');
+  const systemForm        = document.getElementById('system-admin-form');
+  const systemMethodField = document.getElementById('system-method-field');
+  const systemModalTitle  = systemModal ? systemModal.querySelector('[data-modal-title]') : null;
+  const systemSubmitBtn   = systemModal ? systemModal.querySelector('[data-modal-submit]') : null;
+
+  const systemFirstNameInp = document.getElementById('system_first_name');
+  const systemLastNameInp  = document.getElementById('system_last_name');
 
   document.addEventListener('click', (e) => {
+    // Add Admin
     if (e.target.closest('#btn-add')) {
-      voterForm.action = @json(route('admin.store'));
+      if (!adminForm) return;
+      adminForm.action = @json(route('admin.store'));
       methodField.value   = 'POST';
-      modalTitleEl.textContent = 'Add Admin';
-      submitBtn.textContent = 'Submit';
-      firstNameInp.value = '';
-      lastNameInp.value  = '';
-			phoneNumberInp.value = '';
+      if (modalTitleEl) modalTitleEl.textContent = 'Add Admin';
+      if (submitBtn) submitBtn.textContent = 'Submit';
+      if (firstNameInp) firstNameInp.value = '';
+      if (lastNameInp) lastNameInp.value  = '';
+      if (phoneNumberInp) phoneNumberInp.value = '';
       return;
     }
 
-    const editBtn = e.target.closest('.btn-edit');
-    if (editBtn) {
-      const id  = editBtn.dataset.id;
+    // Edit Admin
+    const editAdminBtn = e.target.closest('.btn-edit-admin');
+    if (editAdminBtn) {
+      if (!adminForm) return;
+      const id  = editAdminBtn.dataset.id;
       const url = updateTpl.replace(':id', id);
 
-      voterForm.action = url;
+      adminForm.action = url;
       methodField.value   = 'PUT';
-      modalTitleEl.textContent = 'Edit Admin';
-      submitBtn.textContent = 'Update';
+      if (modalTitleEl) modalTitleEl.textContent = 'Edit Admin';
+      if (submitBtn) submitBtn.textContent = 'Update';
 
-			firstNameInp.value = editBtn.dataset.first_name || '';
-      lastNameInp.value  = editBtn.dataset.last_name || '';
-			phoneNumberInp.value = editBtn.dataset.phone_number || '';
+      if (firstNameInp) firstNameInp.value = editAdminBtn.dataset.first_name || '';
+      if (lastNameInp)  lastNameInp.value  = editAdminBtn.dataset.last_name || '';
+      if (phoneNumberInp) phoneNumberInp.value = editAdminBtn.dataset.phone_number || '';
+      return;
+    }
+
+    // Add System Admin
+    if (e.target.closest('#btn-add-system')) {
+      if (!systemForm) return;
+      systemForm.action = @json(route('admin.store'));
+      systemMethodField.value = 'POST';
+      if (systemModalTitle) systemModalTitle.textContent = 'Add System Admin';
+      if (systemSubmitBtn) systemSubmitBtn.textContent = 'Submit';
+      if (systemFirstNameInp) systemFirstNameInp.value = '';
+      if (systemLastNameInp) systemLastNameInp.value  = '';
+      return;
+    }
+
+    // Edit System Admin
+    const editSystemBtn = e.target.closest('.btn-edit-system');
+    if (editSystemBtn) {
+      if (!systemForm) return;
+      const id  = editSystemBtn.dataset.id;
+      const url = updateTpl.replace(':id', id);
+
+      systemForm.action = url;
+      systemMethodField.value = 'PUT';
+      if (systemModalTitle) systemModalTitle.textContent = 'Edit System Admin';
+      if (systemSubmitBtn) systemSubmitBtn.textContent = 'Update';
+
+      if (systemFirstNameInp) systemFirstNameInp.value = editSystemBtn.dataset.first_name || '';
+      if (systemLastNameInp)  systemLastNameInp.value  = editSystemBtn.dataset.last_name || '';
       return;
     }
   });
 
-
   @if($errors->any())
-    window.Modal.openById('admin-modal');
+    @if(old('type') === 'system-admin')
+      window.Modal.openById('system-admin-modal');
+    @else
+      window.Modal.openById('admin-modal');
+    @endif
   @endif
 </script>
 
+{{-- ===== Face capture script (ADMIN ONLY FORM) ===== --}}
 <script>
 (function(){
   function sayA(t){ const s=document.getElementById('face-status-admin'); if(s) s.textContent=t; console.log('[admin face]', t); }
@@ -390,7 +494,8 @@
   }
 
   document.addEventListener('click', (e)=>{
-    if (e.target.closest('#btn-add') || e.target.closest('.btn-edit')) {
+    // Only hook face capture for admin modal (btn-add or edit-admin)
+    if (e.target.closest('#btn-add') || e.target.closest('.btn-edit-admin')) {
       if (!document.getElementById(adminModalId)) return; // safety
       aResetUI();
       sayA('Initializing camera…');
@@ -408,7 +513,7 @@
   window.addEventListener('beforeunload', aStop);
 
   document.addEventListener('click', (e)=>{
-    if(e.target.id==='btn-capture-face-admin') (async()=>{
+    if(e.target.id==='btn-capture-face-admin')(async()=>{
       ah();
       if(!_astream){ sayA('Camera not started yet.'); return; }
 

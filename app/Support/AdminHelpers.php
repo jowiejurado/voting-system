@@ -71,6 +71,29 @@ if (! function_exists('generate_admin_id')) {
 	}
 }
 
+if (! function_exists('generate_system_admin_id')) {
+	function generate_system_admin_id(int $pad = 4): string
+	{
+		return DB::transaction(function () use ($pad) {
+			$prefix = 'sadm';
+
+			// Lock rows to avoid duplicates under concurrency
+			$last = DB::table('users')
+				->where('admin_id', 'like', $prefix . '%')
+				->orderByDesc('admin_id')
+				->lockForUpdate()
+				->value('admin_id');
+
+			// Start at 0 if none exist yet
+			$nextSeq = $last
+				? (int) substr($last, strlen($prefix)) + 1
+				: 0;
+
+			return $prefix . str_pad((string) $nextSeq, $pad, '0', STR_PAD_LEFT);
+		});
+	}
+}
+
 if (! function_exists('generate_member_id')) {
 	function generate_member_id(int $pad = 4): string
 	{
