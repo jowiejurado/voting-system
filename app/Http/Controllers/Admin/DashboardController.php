@@ -10,26 +10,62 @@ use App\Models\User;
 use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
 	public function index()
 	{
+		$today  = Carbon::today();
+		$cutoff = $today->copy()->addDays(5); // upcoming within next 5 days
+
+		/**
+		 * Pick the election whose date is:
+		 *  - today (current), or
+		 *  - within the next 5 days (upcoming)
+		 *
+		 * We completely ignore elections with date < today,
+		 * even if is_active = 1.
+		 */
+		$currentElection = Election::whereDate('date', '>=', $today)
+			->whereDate('date', '<=', $cutoff)
+			->orderByDesc('is_active') // prefer active if there are multiple
+			->orderBy('date')          // then the earliest by date
+			->first();
+
+		// Base stats: voters are global; others are election-specific
 		$stats = [
-			'candidates' => Candidate::count(),
-			'positions'  => Position::count(),
+			'positions'  => 0,
+			'candidates' => 0,
 			'voters'     => User::where('type', 'voter')->count(),
-			'voted'      => Vote::distinct('user_id')->count('user_id'),
+			'voted'      => 0,
 		];
 
 		$charts = [];
-		$active = Election::where('is_active', true)->first();
 
-		if ($active) {
-			$positions = Position::with(['candidates:id,first_name,last_name,position_id'])->get();
+		if ($currentElection) {
+			// Positions that have candidates in THIS election
+			$positions = Position::whereHas('candidates', function ($q) use ($currentElection) {
+				$q->where('election_id', $currentElection->id);
+			})
+				->with(['candidates' => function ($q) use ($currentElection) {
+					$q->where('election_id', $currentElection->id);
+				}])
+				->get();
 
+			// Stats for this election
+			$stats['positions'] = $positions->count();
+
+			$stats['candidates'] = Candidate::where('election_id', $currentElection->id)
+				->count();
+
+			$stats['voted'] = Vote::where('election_id', $currentElection->id)
+				->distinct('user_id')
+				->count('user_id');
+
+			// Votes per candidate for this election
 			$votesByCandidate = Vote::select('candidate_id', DB::raw('COUNT(*) as votes'))
-				->where('election_id', $active->id)
+				->where('election_id', $currentElection->id)
 				->groupBy('candidate_id')
 				->pluck('votes', 'candidate_id');
 
@@ -42,15 +78,23 @@ class DashboardController extends Controller
 					$data[]   = (int) ($votesByCandidate[$candidate->id] ?? 0);
 				}
 
-				$charts[] = [
-					'position' => $position->name,
-					'labels'   => $labels,
-					'data'     => $data,
-				];
+				if (!empty($labels)) {
+					$charts[] = [
+						'position' => $position->name,
+						'labels'   => $labels,
+						'data'     => $data,
+					];
+				}
 			}
 		}
 
-		return view('admin.dashboard', compact('stats', 'charts'));
+		// If there is no election in [today, today+5],
+		// positions/candidates/voted remain 0 and charts is empty.
+		return view('admin.dashboard', [
+			'stats'           => $stats,
+			'charts'          => $charts,
+			'currentElection' => $currentElection,
+		]);
 	}
 
 	public function toggleElection(Request $request)
