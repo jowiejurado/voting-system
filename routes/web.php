@@ -36,6 +36,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 		Route::apiResource('candidates', AdminCandidateController::class);
 		Route::apiResource('elections', AdminElectionController::class);
 		Route::get('archives', [AdminArchiveController::class, 'index'])->name('archives.index');
+		Route::get('archives/{election}', [AdminArchiveController::class, 'show'])->name('archives.show');
 		Route::get('votes', [AdminVoteController::class, 'index'])->name('votes.index');
 		Route::get('voter-status', [AdminVoteController::class, 'voterStatus'])->name('voter-status.index');
 		Route::get('face', [AdminFaceController::class, 'show'])->name('face');
