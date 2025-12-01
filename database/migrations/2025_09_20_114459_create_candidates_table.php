@@ -15,9 +15,9 @@ return new class extends Migration
 			$table->id();
 			$table->foreignId('election_id')->constrained('elections')->cascadeOnDelete();
 			$table->foreignId('position_id')->constrained('positions')->cascadeOnDelete();
-			$table->string('last_name');
-			$table->string('first_name');
-			$table->string('organization_name');
+			$table->text('last_name');
+			$table->text('first_name');
+			$table->text('organization_name');
 			$table->softDeletes();
 			$table->timestamps();
 		});

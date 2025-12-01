@@ -15,11 +15,11 @@ return new class extends Migration
 			$table->id();
 			$table->string('admin_id')->nullable()->unique();
 			$table->string('member_id')->nullable()->unique();
-			$table->string('last_name');
-			$table->string('first_name');
+			$table->text('last_name');
+			$table->text('first_name');
 			$table->string('password');
-			$table->string('phone_number');
-			$table->string('organization_name')->nullable();
+			$table->text('phone_number');
+			$table->text('organization_name')->nullable();
 			$table->enum('type', ['voter', 'admin', 'system-admin'])->default('voter');
 			$table->boolean('has_voted')->default(false);
 			$table->boolean('is_active')->default(true);

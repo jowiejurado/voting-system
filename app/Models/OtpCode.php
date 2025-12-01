@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasEncryptedAttributes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class OtpCode extends Model
 {
-	use HasFactory;
+	use HasFactory, HasEncryptedAttributes;
 
 	protected $fillable = [
 		'user_id',
@@ -15,6 +16,11 @@ class OtpCode extends Model
 		'code',
 		'expires_at',
 		'used',
+	];
+
+	protected array $encryptable = [
+		'phone_number',
+		'code',
 	];
 
 	protected $casts = [

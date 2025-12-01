@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Models\Traits\HasEncryptedAttributes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
 	/** @use HasFactory<\Database\Factories\UserFactory> */
-	use HasFactory, Notifiable;
+	use HasFactory, Notifiable, HasEncryptedAttributes;
 
 	/**
 	 * The attributes that are mass assignable.
@@ -32,6 +34,13 @@ class User extends Authenticatable
 		'last_signed_in',
 		'last_signed_out',
 		'face_descriptor'
+	];
+
+	protected array $encryptable = [
+		'last_name',
+		'first_name',
+		'phone_number',
+		'organization_name',
 	];
 
 	/**

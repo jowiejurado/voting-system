@@ -2,16 +2,23 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasEncryptedAttributes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Candidate extends Model
 {
-	use HasFactory;
+	use HasFactory, HasEncryptedAttributes;
 
 	protected $fillable = [
 		'election_id',
 		'position_id',
+		'last_name',
+		'first_name',
+		'organization_name',
+	];
+
+	protected array $encryptable = [
 		'last_name',
 		'first_name',
 		'organization_name',

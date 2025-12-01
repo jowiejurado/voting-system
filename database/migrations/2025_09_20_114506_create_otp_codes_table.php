@@ -14,8 +14,8 @@ return new class extends Migration
 		Schema::create('otp_codes', function (Blueprint $table) {
 			$table->id();
 			$table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-			$table->string('phone_number');
-			$table->string('code');
+			$table->text('phone_number');
+			$table->text('code');
 			$table->dateTime('expires_at');
 			$table->boolean('used')->default(false);
 			$table->timestamps();

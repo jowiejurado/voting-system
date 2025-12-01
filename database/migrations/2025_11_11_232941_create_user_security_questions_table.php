@@ -14,8 +14,8 @@ return new class extends Migration
 		Schema::create('user_security_questions', function (Blueprint $table) {
 			$table->id();
 			$table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-      $table->string('question', 255);
-      $table->string('answer_hash', 255);
+      $table->text('question', 255);
+      $table->text('answer_hash', 255);
 			$table->timestamps();
 		});
 	}

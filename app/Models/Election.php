@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasEncryptedAttributes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Election extends Model
 {
-	use HasFactory;
+	use HasFactory, HasEncryptedAttributes;
 
 	protected $fillable = [
 		'title',
@@ -15,6 +16,13 @@ class Election extends Model
 		'start_time',
 		'end_time',
 		'is_active',
+	];
+
+	protected array $encryptable = [
+		'title',
+		'date',
+		'start_time',
+		'end_time',
 	];
 
 	protected $casts = [

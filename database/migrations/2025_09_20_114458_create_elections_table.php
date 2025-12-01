@@ -13,10 +13,10 @@ return new class extends Migration
 	{
 		Schema::create('elections', function (Blueprint $table) {
 			$table->id();
-			$table->string('title');
-			$table->string('date');
-			$table->string('start_time');
-			$table->string('end_time');
+			$table->text('title');
+			$table->text('date');
+			$table->text('start_time');
+			$table->text('end_time');
 			$table->boolean('is_active')->default(false);
 			$table->softDeletes();
 			$table->timestamps();
