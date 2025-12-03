@@ -20,7 +20,6 @@ class OtpCode extends Model
 
 	protected array $encryptable = [
 		'phone_number',
-		'code',
 	];
 
 	protected $casts = [
