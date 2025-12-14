@@ -12,8 +12,12 @@ class CandidateController extends Controller
 {
 	public function index(Request $request)
 	{
-		$positions = Position::pluck('name', 'id');
-		$elections = Election::pluck('title', 'id');
+		$positions = Position::get()
+    	->mapWithKeys(fn ($e) => [$e->id => $e->name]);
+
+		$elections = Election::where('is_active', 1)
+			->get()
+			->mapWithKeys(fn ($e) => [$e->id => $e->title]);
 
 		$q = trim($request->get('q', ''));
 		$perPage = (int) $request->get('per_page', 10);
