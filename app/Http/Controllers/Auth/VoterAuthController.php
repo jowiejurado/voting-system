@@ -43,7 +43,8 @@ class VoterAuthController extends Controller
 
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
-		$this->otpService->sendOTP(Auth::user(), 'login');
+		$channel = in_array($request->input('otp_channel'), ['sms', 'email'], true) ? $request->input('otp_channel') : 'sms';
+		$this->otpService->sendOTP(Auth::user(), 'login', $channel);
 
 		$user = $request->user();
 		$user->forceFill(['last_signed_in' => now('Asia/Manila')])->save();
@@ -92,20 +93,35 @@ class VoterAuthController extends Controller
 		$user = Auth::user();
 
 		if (!$user) {
-			return response()->json([
-				'success' => false,
-				'message' => 'Failed to send OTP',
-				'buttonText' => 'TRY AGAIN'
-			], 500);
+			if ($request->expectsJson()) {
+				return response()->json([
+					'success' => false,
+					'message' => 'Failed to send OTP',
+					'buttonText' => 'TRY AGAIN'
+				], 500);
+			}
+			return back()->with([
+				'error' => 'Failed to send OTP',
+				'buttonText' => 'TRY AGAIN',
+			]);
 		}
 
-		$this->otpService->sendOTP($user);
+		$channel = in_array($request->input('channel'), ['sms', 'email'], true) ? $request->input('channel') : 'sms';
+		$context = $request->input('context', 'change-password'); // default for change-password modal
+		$this->otpService->sendOTP($user, $context, $channel);
 
-		return response()->json([
-			'success' => true,
-			'message' => 'OTP has been sent',
+		if ($request->expectsJson()) {
+			return response()->json([
+				'success' => true,
+				'message' => 'OTP has been sent',
+				'buttonText' => 'Proceed'
+			], 201);
+		}
+
+		return back()->with([
+			'success' => 'OTP has been sent',
 			'buttonText' => 'Proceed'
-		], 201);
+		]);
 	}
 
 	public function changePassword(Request $request)

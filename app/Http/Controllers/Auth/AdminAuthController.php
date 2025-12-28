@@ -30,10 +30,10 @@ class AdminAuthController extends Controller
 			'adminId' => ['required'],
 			'password' => ['required'],
 			'g-recaptcha-response' => ['required', 'captcha'],
-    ], [
+		], [
 			'g-recaptcha-response.required' => 'Please confirm you are not a robot.',
 			'g-recaptcha-response.captcha'  => 'reCAPTCHA verification failed. Please try again.',
-    ]);
+		]);
 
 		if (!Auth::attempt(['admin_id' => $request->adminId, 'password' => $request->password])) {
 			return back()->with([
@@ -44,7 +44,8 @@ class AdminAuthController extends Controller
 
 		$request->session()->regenerate();
 		session(['otp_verified' => false]);
-		$this->otpService->sendOTP(Auth::user(), 'login');
+		$channel = in_array($request->input('otp_channel'), ['sms', 'email'], true) ? $request->input('otp_channel') : 'sms';
+		$this->otpService->sendOTP(Auth::user(), 'login', $channel);
 
 		$user = $request->user();
 		$user->forceFill(['last_signed_in' => now('Asia/Manila')])->save();
@@ -105,7 +106,9 @@ class AdminAuthController extends Controller
 			]);
 		}
 
-		$this->otpService->sendOTP($user, 'change-password');
+		$channel = in_array($request->input('channel'), ['sms', 'email'], true) ? $request->input('channel') : 'sms';
+		$context = $request->input('context', 'change-password'); // default kept for change-password modal
+		$this->otpService->sendOTP($user, $context, $channel);
 
 		return back()->with([
 			'success' => 'OTP has been sent',
