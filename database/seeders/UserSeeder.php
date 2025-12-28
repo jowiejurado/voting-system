@@ -30,6 +30,7 @@ class UserSeeder extends Seeder
 			'first_name'		=> 'Jowie Trence',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
 			'phone_number'	=> '09426735530',
+			'email'					=> 'juradojowietrence@gmail.com',
 			'type' 					=> UserType::SYSTEM_ADMIN->value,
 		]);
 

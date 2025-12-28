@@ -61,6 +61,7 @@ class AdminController extends Controller
 				'first_name'   => 'required|string|max:255',
 				'last_name'    => 'required|string|max:255',
 				'phone_number' => 'required|string',
+				'email' 			 => 'required|string',
 				// optional, but safe to validate:
 				'user_type'    => 'required|in:system-admin',
 			]);
@@ -69,8 +70,9 @@ class AdminController extends Controller
 				'last_name'      => $data['last_name'],
 				'first_name'     => $data['first_name'],
 				'phone_number'   => $data['phone_number'],
+				'email'   			 => $data['email'],
 				// use your existing helper for IDs
-				'admin_id'       => generate_admin_id(),
+				'admin_id'       => generate_system_admin_id(),
 				'type'           => 'system-admin',
 				'password'       => Hash::make('P@ssw0rd!@#'),
 				'face_descriptor' => null,
@@ -88,6 +90,7 @@ class AdminController extends Controller
 			'first_name'           => 'required|string|max:255',
 			'last_name'            => 'required|string|max:255',
 			'phone_number'         => 'required|string',
+			'email'         			 => 'required|string',
 			'admin_id'             => 'required|string',   // current system-admin credentials
 			'password'             => 'required|string',
 			'face_descriptor_json' => 'required|string',
@@ -121,6 +124,7 @@ class AdminController extends Controller
 			'last_name'      => $data['last_name'],
 			'first_name'     => $data['first_name'],
 			'phone_number'   => $data['phone_number'],
+			'email'   			 => $data['email'],
 			'admin_id'       => generate_admin_id(),
 			'type'           => 'admin',
 			'password'       => Hash::make('P@ssw0rd!@#'),
@@ -150,12 +154,14 @@ class AdminController extends Controller
 				'first_name' => 'required|string|max:255',
 				'last_name'  => 'required|string|max:255',
 				'phone_number' => 'required|string',
+				'email' => 'required|string',
 			]);
 
 			$admin->update([
 				'last_name'  => $data['last_name'],
 				'first_name' => $data['first_name'],
 				'phone_number' => $data['phone_number'],
+				'email' => $data['email'],
 			]);
 
 			return redirect()->route('admin.index')
@@ -169,6 +175,7 @@ class AdminController extends Controller
 			'first_name'           => 'required|string|max:255',
 			'last_name'            => 'required|string|max:255',
 			'phone_number'         => 'required|string',
+			'email'         			 => 'required|string',
 			'admin_id'             => 'required|string',
 			'password'             => 'required|string',
 			'face_descriptor_json' => 'nullable|string',
@@ -204,6 +211,7 @@ class AdminController extends Controller
 			'last_name'       => $data['last_name'],
 			'first_name'      => $data['first_name'],
 			'phone_number'    => $data['phone_number'],
+			'email'    				=> $data['email'],
 			'face_descriptor' => $descriptor,
 		]);
 

@@ -133,6 +133,16 @@
       @enderror
     </div>
 
+		<div>
+      <label class="block text-sm mb-1">Email Address</label>
+      <input type="email" name="email" id="email"
+             class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+             value="{{ old('email') }}" placeholder="e.g., example@mail.com" required>
+      @error('email')
+        <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+      @enderror
+    </div>
+
     <div>
       <label class="block text-sm mb-1">Organization Name</label>
       <input type="text" name="organization_name" id="organization_name"
@@ -406,6 +416,7 @@
 
   const firstNameInp    = document.getElementById('first_name');
   const lastNameInp     = document.getElementById('last_name');
+	const emailInp      = document.getElementById('email');
   const orgNameInp      = document.getElementById('organization_name');
   const memberIdInp     = document.getElementById('member_id');
   const phoneNumberInp  = document.getElementById('phone_number');
@@ -418,6 +429,7 @@
       if(submitBtn)    submitBtn.textContent    = 'Submit';
       if(firstNameInp)   firstNameInp.value   = '';
       if(lastNameInp)    lastNameInp.value    = '';
+			if(emailInp) emailInp.value    = '';
       if(orgNameInp)     orgNameInp.value     = '';
       if(memberIdInp)    memberIdInp.value    = '';
       if(phoneNumberInp) phoneNumberInp.value = '';
@@ -436,6 +448,7 @@
 
       if(firstNameInp)   firstNameInp.value   = editBtn.dataset.first_name || '';
       if(lastNameInp)    lastNameInp.value    = editBtn.dataset.last_name  || '';
+			if(emailInp)    emailInp.value    = editBtn.dataset.email  || '';
       if(orgNameInp)     orgNameInp.value     = editBtn.dataset.organization_name || '';
       if(memberIdInp)    memberIdInp.value    = editBtn.dataset.member_id  || '';
       if(phoneNumberInp) phoneNumberInp.value = editBtn.dataset.phone_number || '';

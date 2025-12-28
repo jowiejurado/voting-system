@@ -86,6 +86,7 @@
 				<button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">
 					Proceed
 				</button>
+				<a href="{{ route('voter.password.request') }}" class="text-blue-600 font-medium">Forgot password?</a>
 			</form>
 		</div>
 	</div>

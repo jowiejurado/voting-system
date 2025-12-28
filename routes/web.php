@@ -28,6 +28,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
 	Route::post('send-otp', [AdminAuthController::class, 'sendOtp'])->name('send-otp');
 	Route::match(['post', 'put'], 'change-password', [AdminAuthController::class, 'changePassword'])->name('change-password');
 
+	// Admin password reset
+	Route::get('forgot-password', [AdminAuthController::class, 'showForgotPassword'])->name('password.request');
+	Route::post('forgot-password', [AdminAuthController::class, 'sendResetLinkEmail'])->name('password.email');
+	Route::get('reset-password/{token}', [AdminAuthController::class, 'showResetForm'])->name('password.reset');
+	Route::post('reset-password', [AdminAuthController::class, 'resetPassword'])->name('password.update');
+
 	Route::middleware(['admin'])->group(function () {
 		Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -60,6 +66,12 @@ Route::prefix('voter')->name('voter.')->group(function () {
 
 	Route::post('send-otp', [VoterAuthController::class, 'sendOtp'])->name('send-otp');
 	Route::match(['post', 'put'], 'change-password', [VoterAuthController::class, 'changePassword'])->name('change-password');
+
+	// Voter password reset
+	Route::get('forgot-password', [VoterAuthController::class, 'showForgotPassword'])->name('password.request');
+	Route::post('forgot-password', [VoterAuthController::class, 'sendResetLinkEmail'])->name('password.email');
+	Route::get('reset-password/{token}', [VoterAuthController::class, 'showResetForm'])->name('password.reset');
+	Route::post('reset-password', [VoterAuthController::class, 'resetPassword'])->name('password.update');
 
 	Route::middleware(['voter'])->group(function () {
 		Route::get('ballot', [BallotController::class, 'showBallot'])->name('ballot');

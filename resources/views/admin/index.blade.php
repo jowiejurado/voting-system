@@ -161,6 +161,14 @@
     @error('phone_number') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
+	<div>
+    <label class="block text-sm mb-1" for="email">Email Address</label>
+    <input type="text" name="email" id="email"
+           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('email') }}" placeholder="e.g., example@mail.com" required>
+    @error('email') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
   <input type="hidden" name="face_descriptor_json" id="face_descriptor_json_admin" data-clear-on-close>
 
   {{-- ===== Face registration (ADMIN ONLY) ===== --}}
@@ -224,6 +232,14 @@
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('phone_number') }}" placeholder="e.g., +639123456789, 09123456789" required>
     @error('phone_number') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
+	<div>
+    <label class="block text-sm mb-1" for="system_email">Email Address</label>
+    <input type="text" name="email" id="system_email"
+           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('email') }}" placeholder="e.g., example@mail.com" required>
+    @error('email') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
   {{-- NOTE: No face capture, no OTP, no security questions here --}}
@@ -299,6 +315,7 @@
   const firstNameInp    = document.getElementById('first_name');
   const lastNameInp     = document.getElementById('last_name');
   const phoneNumberInp  = document.getElementById('phone_number');
+	const emailInp  = document.getElementById('email');
 
   // ==== System admin modal (no face) ====
   const systemModal       = document.getElementById('system-admin-modal');
@@ -310,6 +327,7 @@
   const systemFirstNameInp = document.getElementById('system_first_name');
   const systemLastNameInp  = document.getElementById('system_last_name');
 	const systemPhoneNumberInp  = document.getElementById('system_phone_number');
+	const systemEmailInp  = document.getElementById('system_email');
 
   document.addEventListener('click', (e) => {
     // Add Admin
@@ -322,6 +340,7 @@
       if (firstNameInp) firstNameInp.value = '';
       if (lastNameInp) lastNameInp.value  = '';
       if (phoneNumberInp) phoneNumberInp.value = '';
+			if (emailInp) emailInp.value = '';
       return;
     }
 
@@ -340,6 +359,7 @@
       if (firstNameInp) firstNameInp.value = editAdminBtn.dataset.first_name || '';
       if (lastNameInp)  lastNameInp.value  = editAdminBtn.dataset.last_name || '';
       if (phoneNumberInp) phoneNumberInp.value = editAdminBtn.dataset.phone_number || '';
+			if (emailInp) emailInp.value = editAdminBtn.dataset.email || '';
       return;
     }
 
@@ -353,6 +373,7 @@
       if (systemFirstNameInp) systemFirstNameInp.value = '';
       if (systemLastNameInp) systemLastNameInp.value  = '';
 			if (systemPhoneNumberInp) systemPhoneNumberInp.value  = '';
+			if (systemEmailInp) systemEmailInp.value  = '';
       return;
     }
 
@@ -371,6 +392,7 @@
       if (systemFirstNameInp) systemFirstNameInp.value = editSystemBtn.dataset.first_name || '';
       if (systemLastNameInp)  systemLastNameInp.value  = editSystemBtn.dataset.last_name || '';
 			if (systemPhoneNumberInp)  systemPhoneNumberInp.value  = editSystemBtn.dataset.phone_number || '';
+			if (systemEmailInp)  systemEmailInp.value  = editSystemBtn.dataset.email || '';
       return;
     }
   });
