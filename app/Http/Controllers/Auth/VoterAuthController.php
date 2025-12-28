@@ -5,9 +5,14 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\UserSecurityQuestion;
 use App\Services\OtpService;
+use App\Mail\ResetPasswordMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 
 class VoterAuthController extends Controller
 {
@@ -135,6 +140,88 @@ class VoterAuthController extends Controller
 			'success' => 'Password updated',
 			'buttonText' => 'Proceed'
 		]);
+	}
+
+	public function showForgotPassword()
+	{
+		return view('voter.auth.forgot-password');
+	}
+
+	public function sendResetLinkEmail(Request $request)
+	{
+		$request->validate(['email' => ['required', 'email']]);
+
+		$user = \App\Models\User::where('email', $request->email)
+			->where('type', 'voter')
+			->first();
+
+		if ($user) {
+			$token = Password::broker('users')->createToken($user);
+			$resetUrl = route('voter.password.reset', [
+				'token' => $token,
+				'email' => $user->email,
+			]);
+			Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl));
+		}
+
+		return redirect()->route('voter.login')->with([
+			'success' => 'Reset password link has been sent.',
+			'buttonText' => 'OK'
+		]);
+	}
+
+	public function showResetForm(Request $request, string $token)
+	{
+		return view('auth.reset-password', [
+			'token' => $token,
+			'email' => $request->query('email'),
+			'postRoute' => 'voter.password.update',
+			'heading' => 'Voter — Reset Password'
+		]);
+	}
+
+	public function resetPassword(Request $request)
+	{
+		$request->validate([
+			'token' => ['required'],
+			'email' => ['required', 'email'],
+			'password' => ['required', 'confirmed', 'min:6'],
+		]);
+
+		$voterExists = \App\Models\User::where('email', $request->email)
+			->where('type', 'voter')
+			->exists();
+
+		if (!$voterExists) {
+			return back()->with([
+				'error' => 'Invalid reset request.',
+				'buttonText' => 'TRY AGAIN'
+			])->withInput($request->only('email'));
+		}
+
+		$status = Password::reset(
+			$request->only('email', 'password', 'password_confirmation', 'token'),
+			function ($user) use ($request) {
+				$user->forceFill([
+					'password' => Hash::make($request->password),
+					'remember_token' => Str::random(60),
+				])->save();
+
+				event(new PasswordReset($user));
+			}
+		);
+
+		if ($status === Password::PASSWORD_RESET) {
+			return redirect()->route('voter.login')->with([
+				'success' => 'Password has been reset. You may log in.',
+				'buttonText' => 'Proceed'
+			]);
+		}
+
+		return back()->with([
+			'error' => __($status),
+			'buttonText' => 'TRY AGAIN'
+		])->withInput($request->only('email'));
 	}
 
 	public function showVerifyMethod(Request $request)
