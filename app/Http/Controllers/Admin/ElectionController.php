@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Election;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ElectionController extends Controller
 {
@@ -15,26 +16,84 @@ class ElectionController extends Controller
 		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 		$now = now('Asia/Manila');
 
-		$elections = \App\Models\Election::query()
-			->when($q !== '', function ($query) use ($q) {
-					$query->where(function ($sub) use ($q) {
-							$sub->where('title', 'like', "%{$q}%");
-					});
-			})
-			->where(function ($query) use ($now) {
-					$query
-							// Upcoming: any date after today
-							->whereDate('date', '>', $now->toDateString())
-							// OR Current: same date and end_time still ahead
-							->orWhere(function ($q2) use ($now) {
-									$q2->whereDate('date', $now->toDateString())
-										->whereTime('end_time', '>=', $now->toTimeString());
-							});
-			})
-			->orderBy('date', 'asc')       // soonest first; adjust if you prefer latest()
-			->orderBy('end_time', 'asc')
-			->paginate($perPage)
-			->withQueryString();
+		// Update statuses without relying on DB-level comparisons (columns are encrypted)
+		$toCheck = Election::query()->get();
+
+		foreach ($toCheck as $item) {
+			$newStatus = $item->status;
+			$today = $now->toDateString();
+			$itemDate = \Illuminate\Support\Carbon::parse($item->date, 'Asia/Manila')->toDateString();
+
+			if ($itemDate < $today) {
+				// Past date -> completed
+				$newStatus = 'completed';
+			} elseif ($itemDate > $today) {
+				// Future date -> pending
+				$newStatus = 'pending';
+			} else {
+				// Today -> evaluate time window
+				try {
+					$startAt = \Illuminate\Support\Carbon::parse($itemDate . ' ' . (string) $item->start_time, 'Asia/Manila');
+					$endAt = \Illuminate\Support\Carbon::parse($itemDate . ' ' . (string) $item->end_time, 'Asia/Manila');
+
+					if ($now->lt($startAt)) {
+						$newStatus = 'pending';
+					} elseif ($now->lte($endAt)) {
+						$newStatus = 'current';
+					} else {
+						$newStatus = 'completed';
+					}
+				} catch (\Throwable $e) {
+					// If parsing fails, default to completed to archive invalidly timed elections
+					$newStatus = 'completed';
+				}
+			}
+
+			if ($newStatus !== $item->status) {
+				$item->status = $newStatus;
+				$item->save();
+			}
+		}
+
+		// Fetch all to filter/sort in-memory because searchable columns are encrypted at rest
+		$all = Election::query()->get();
+
+		// Apply search and exclude completed
+		$filtered = $all->filter(function ($item) use ($q) {
+			if ($q !== '') {
+				$title = (string) $item->title;
+				if (stripos($title, $q) === false) {
+					return false;
+				}
+			}
+			return (string) $item->status !== 'completed';
+		});
+
+		// Sort by date asc then end_time asc using Carbon parsing
+		$sorted = $filtered->sortBy(function ($item) {
+			try {
+				$d = \Illuminate\Support\Carbon::parse((string) $item->date, 'Asia/Manila')->toDateString();
+				$et = \Illuminate\Support\Carbon::parse($d . ' ' . (string) $item->end_time, 'Asia/Manila')->timestamp;
+				return $et;
+			} catch (\Throwable $e) {
+				return PHP_INT_MAX;
+			}
+		})->values();
+
+		// Manual pagination on the collection
+		$currentPage = LengthAwarePaginator::resolveCurrentPage();
+		$currentItems = $sorted->forPage($currentPage, $perPage)->values();
+		$elections = new LengthAwarePaginator(
+			$currentItems,
+			$sorted->count(),
+			$perPage,
+			$currentPage,
+			[
+				'path' => $request->url(),
+				'pageName' => 'page',
+			]
+		);
+		$elections->appends($request->query());
 
 		return view('admin.elections.index', compact('elections', 'q', 'perPage'));
 	}

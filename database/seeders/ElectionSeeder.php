@@ -19,7 +19,7 @@ class ElectionSeeder extends Seeder
 				'date'       => Carbon::now()->toDateString(),
 				'start_time' => Carbon::now()->subMinutes(5)->format('H:i:s'),
 				'end_time'   => Carbon::now()->addHours(2)->format('H:i:s'),
-				'is_active'  => true,
+				'status'  => 'pending',
 			]
 		);
 	}

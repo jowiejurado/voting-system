@@ -15,7 +15,7 @@ class CandidateController extends Controller
 		$positions = Position::get()
     	->mapWithKeys(fn ($e) => [$e->id => $e->name]);
 
-		$elections = Election::where('is_active', 1)
+		$elections = Election::whereIn('status', ['pending', 'current'])
 			->get()
 			->mapWithKeys(fn ($e) => [$e->id => $e->title]);
 

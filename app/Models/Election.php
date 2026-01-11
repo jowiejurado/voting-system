@@ -15,7 +15,7 @@ class Election extends Model
 		'date',
 		'start_time',
 		'end_time',
-		'is_active',
+		'status',
 	];
 
 	protected array $encryptable = [
@@ -23,10 +23,7 @@ class Election extends Model
 		'date',
 		'start_time',
 		'end_time',
-	];
-
-	protected $casts = [
-		'is_active' => 'boolean',
+		'status'
 	];
 
 	public function candidates()

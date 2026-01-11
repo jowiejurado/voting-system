@@ -29,7 +29,6 @@ class DashboardController extends Controller
 		 */
 		$currentElection = Election::whereDate('date', '>=', $today)
 			->whereDate('date', '<=', $cutoff)
-			->orderByDesc('is_active') // prefer active if there are multiple
 			->orderBy('date')          // then the earliest by date
 			->first();
 
@@ -101,12 +100,12 @@ class DashboardController extends Controller
 	{
 		$data = $request->validate([
 			'title' => 'required|string',
-			'active' => 'required|boolean',
+			'status' => 'required',
 			'starts_at' => 'nullable|date',
 			'ends_at' => 'nullable|date|after_or_equal:starts_at',
 		]);
 		$election = Election::firstOrCreate(['title' => $data['title']]);
-		$election->is_active = (bool) $data['active'];
+		$election->status = $data['status'];
 		if (!empty($data['starts_at'])) {
 			$election->starts_at = $data['starts_at'];
 		} elseif (!$election->starts_at) {

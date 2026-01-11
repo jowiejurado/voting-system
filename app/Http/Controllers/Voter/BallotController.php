@@ -107,7 +107,7 @@ class BallotController extends Controller
 		// Re-check election is active (server-side gate)
 		$now = Carbon::now();
 		if (
-			!$election->is_active ||
+			$election->status == 'current' ||
 			$election->date !== $now->toDateString() ||
 			$now->format('H:i:s') < $election->start_time ||
 			$now->format('H:i:s') > $election->end_time

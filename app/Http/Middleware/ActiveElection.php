@@ -16,7 +16,7 @@ class ActiveElection
 	 */
 	public function handle(Request $request, Closure $next): Response
 	{
-		$active = Election::where('is_active', true)
+		$active = Election::where('status', 'current')
 			->where(function ($q) {
 				$q->whereNull('date')->orWhere('date', '<=', now());
 			})

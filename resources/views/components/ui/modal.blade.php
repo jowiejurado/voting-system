@@ -7,7 +7,7 @@
 ])
 
 <div id="{{ $id }}"
-     class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4"
+     class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/50 p-4 border"
      data-modal data-reset-on-close>
   <div class="w-full {{ $size }} rounded-2xl bg-white shadow-xl overflow-hidden">
     @if($title || $closeButton)
@@ -24,7 +24,7 @@
         id="{{ $form['id'] ?? ($id.'-form') }}"
         method="post"
         action="{{ $form['action'] ?? '' }}"
-        class="px-5 py-4 space-y-4 overflow-y-hidden max-h-[85vh]"
+        class="px-5 py-4 space-y-4 overflow-y-auto max-h-[85vh]"
       >
         @csrf
         @if(!empty($form['spoof']))
