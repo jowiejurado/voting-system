@@ -38,8 +38,6 @@ class ElectionController extends Controller
 
 					if ($now->lt($startAt)) {
 						$newStatus = 'pending';
-					} elseif ($now->lte($endAt)) {
-						$newStatus = 'current';
 					} else {
 						$newStatus = 'completed';
 					}
