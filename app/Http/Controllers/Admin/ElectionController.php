@@ -103,12 +103,12 @@ class ElectionController extends Controller
 			'date'  			=> 'required',
 			'start_time'  => 'required',
 			'end_time'    => 'required',
-			'admin_id'    => 'required|string',
-			'password'    => 'required|string',
+			// 'admin_id'    => 'required|string',
+			// 'password'    => 'required|string',
 		]);
 
-		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+    // assert_admin_credentials($data['admin_id'], $data['password']);
 
 		Election::create([
 			'title'       => $data['title'],
@@ -131,12 +131,12 @@ class ElectionController extends Controller
 			'date'  			=> 'required',
 			'start_time'  => 'required',
 			'end_time'    => 'required',
-			'admin_id'    => 'required|string',
-			'password'    => 'required|string',
+			// 'admin_id'    => 'required|string',
+			// 'password'    => 'required|string',
 		]);
 
-		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+    // assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$election->update([
 			'title'       => $data['title'],

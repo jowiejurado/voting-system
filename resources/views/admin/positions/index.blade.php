@@ -108,7 +108,7 @@
     @error('maximum_votes') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
-  <x-ui.admin-auth class="pt-2" />
+  {{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
 
 <meta name="position-update-url" content="{{ route('admin.positions.update', ':id') }}">

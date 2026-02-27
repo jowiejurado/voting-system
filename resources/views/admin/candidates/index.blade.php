@@ -147,7 +147,7 @@
     @error('organization_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
-  <x-ui.admin-auth class="pt-2" />
+  {{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
 
 <meta name="candidate-update-url" content="{{ route('admin.candidates.update', ':id') }}">

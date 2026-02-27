@@ -51,12 +51,12 @@ class CandidateController extends Controller
 			'last_name'           => 'required|string|max:255',
 			'first_name'  				=> 'required|string|max:255',
 			'organization_name'  	=> 'required|string|max:255',
-			'admin_id'       			=> 'required|string',
-			'password'       			=> 'required|string',
+			// 'admin_id'       			=> 'required|string',
+			// 'password'       			=> 'required|string',
 		]);
 
-		assert_current_user_is_admin();
-		assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+		// assert_admin_credentials($data['admin_id'], $data['password']);
 
 		Candidate::create([
 			'election_id'					=> $data['election'],
@@ -81,12 +81,12 @@ class CandidateController extends Controller
 			'last_name'           => 'required|string|max:255',
 			'first_name'  				=> 'required|string|max:255',
 			'organization_name'  	=> 'required|string|max:255',
-			'admin_id'       			=> 'required|string',
-			'password'       			=> 'required|string',
+			// 'admin_id'       			=> 'required|string',
+			// 'password'       			=> 'required|string',
 		]);
 
-		assert_current_user_is_admin();
-		assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+		// assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$candidate->update([
 			'election_id'					=> $data['election'],

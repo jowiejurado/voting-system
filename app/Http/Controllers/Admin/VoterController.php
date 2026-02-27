@@ -43,16 +43,16 @@ class VoterController extends Controller
 			'organization_name'     							=> 'required|string|max:255',
 			'phone_number'          							=> 'required|string',
 			'email'          											=> 'required|string',
-			'admin_id'              							=> 'required|string',
-			'password'              							=> 'required|string',
+			// 'admin_id'              							=> 'required|string',
+			// 'password'              							=> 'required|string',
 			'face_descriptor_json'  							=> 'required|string',
 			'security_questions'                  => 'required|array|min:1|max:3',
 			'security_questions.*.question'       => 'required|string|max:255',
 			'security_questions.*.answer'         => 'required|string|min:2|max:255',
 		]);
 
-		assert_current_user_is_admin();
-		assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+		// assert_admin_credentials($data['admin_id'], $data['password']);
 
 		// Face descriptor (unchanged)
 		$descriptor = null;
@@ -114,8 +114,8 @@ class VoterController extends Controller
 			'phone_number'          => 'required|string',
 			'email'     			     	=> 'required|string',
 			'member_id'             => 'required|string',
-			'admin_id'              => 'required|string',
-			'password'              => 'required|string',
+			// 'admin_id'              => 'required|string',
+			// 'password'              => 'required|string',
 			'face_descriptor_json'  => 'nullable|string',
 
 			// NEW:
@@ -124,8 +124,8 @@ class VoterController extends Controller
 			'security_questions.*.answer'         => 'required|string|min:2|max:255',
 		]);
 
-		assert_current_user_is_admin();
-		assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+		// assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$descriptor = $voter->face_descriptor;
 

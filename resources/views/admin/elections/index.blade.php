@@ -142,7 +142,7 @@
     @error('end_time') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
-  <x-ui.admin-auth class="pt-2" />
+  {{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
 
 <meta name="election-update-url" content="{{ route('admin.elections.update', ':id') }}">

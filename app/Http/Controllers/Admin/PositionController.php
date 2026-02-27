@@ -33,12 +33,12 @@ class PositionController extends Controller
 		$data = $request->validate([
 			'name'           => 'required|string|max:255',
 			'maximum_votes'  => 'required|integer|min:1',
-			'admin_id'       => 'required|string',
-			'password'       => 'required|string',
+			// 'admin_id'       => 'required|string',
+			// 'password'       => 'required|string',
 		]);
 
-		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+    // assert_admin_credentials($data['admin_id'], $data['password']);
 
 		Position::create([
 			'name'           => $data['name'],
@@ -57,12 +57,12 @@ class PositionController extends Controller
 		$data = $request->validate([
 			'name'           => 'required|string|max:255',
 			'maximum_votes'  => 'required|integer|min:1',
-			'admin_id'       => 'required|string',
-			'password'       => 'required|string',
+			// 'admin_id'       => 'required|string',
+			// 'password'       => 'required|string',
 		]);
 
-		assert_current_user_is_admin();
-    assert_admin_credentials($data['admin_id'], $data['password']);
+		// assert_current_user_is_admin();
+    // assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$position->update([
 			'name'           => $data['name'],

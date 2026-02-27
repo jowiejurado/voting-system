@@ -156,8 +156,8 @@
     <div>
       <label class="block text-sm mb-1">Member ID</label>
       <input type="text" name="member_id" id="member_id"
-             class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
-             value="{{ old('member_id') }}" placeholder="e.g., M-000001" readonly>
+             class="w-full border-2 border-gray-400 py-2 px-3 outline-none cursor-not-allowed"
+             value="{{ old('member_id') }}" placeholder="This is auto generated" readonly>
       @error('member_id')
         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
       @enderror
@@ -240,10 +240,10 @@
 				<div class="text-red-600 text-sm mt-2">{{ $message }}</div>
 			@enderror
 		</div>
-
-    <x-ui.admin-auth class="pt-2" />
   </div>
   {{-- /SCROLLABLE BODY --}}
+
+	{{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
 
 <meta name="voter-store-url" content="{{ route('admin.voters.store') }}">
