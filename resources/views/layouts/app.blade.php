@@ -147,14 +147,16 @@
 				</ul>
 				<p class="px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-[#9f9f9f] bg-[#403f3b] border-2 border-[#373737]">Settings</p>
 				<ul>
-					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.index') ? 'bg-[#d0352f]' : '' }}">
-						<a href="{{ route('admin.index') ?? '#' }}" class="flex items-center gap-3">
-							<span class="inline-grid place-items-center w-7 h-auto">
-								<img src={{ asset('icons/admin.png') }} alt="dashboard" width="50" height="50" />
-							</span>
-							Admin
-						</a>
-					</li>
+					@if(Auth::user()->type == 'system-admin')
+						<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.index') ? 'bg-[#d0352f]' : '' }}">
+							<a href="{{ route('admin.index') ?? '#' }}" class="flex items-center gap-3">
+								<span class="inline-grid place-items-center w-7 h-auto">
+									<img src={{ asset('icons/admin.png') }} alt="dashboard" width="50" height="50" />
+								</span>
+								Admin
+							</a>
+						</li>
+					@endif
 					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.elections.index') ? 'bg-[#d0352f]' : '' }}">
 						<a href="{{ route('admin.elections.index') ?? '#' }}" class="flex items-center gap-3">
 							<span class="inline-grid place-items-center w-7 h-auto">
