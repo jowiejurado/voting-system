@@ -8,13 +8,21 @@
     <h1 class="text-3xl font-black mb-2">
       {{ $election->title ?? 'Upcoming Election' }}
     </h1>
-    <p class="text-gray-600 mb-6">
+    <p class="text-gray-600 mb-2">
       Voting opens at
       <strong>
         {{ \Carbon\Carbon::createFromTimestampMs($startTimestampMs, 'Asia/Manila')->format('F j, Y g:i A') }}
         (Asia/Manila)
       </strong>
     </p>
+    @isset($endAtFormatted)
+    <p class="text-gray-600 mb-6">
+      Voting closes at
+      <strong>{{ $endAtFormatted }} (Asia/Manila)</strong>
+    </p>
+    @else
+    <p class="text-gray-600 mb-6"></p>
+    @endisset
 
 		<div id="countdown" class="flex justify-center items-stretch gap-4 mb-6 flex-nowrap overflow-x-auto">
 			<div class="bg-white rounded-2xl shadow border p-4 w-28 text-center">

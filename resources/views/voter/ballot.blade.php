@@ -3,6 +3,31 @@
 @extends('layouts.voter-app')
 
 @section('content')
+{{-- Voting ends countdown: same style as voting start countdown, no wrapper background --}}
+@if(!empty($votingEndsAtTimestampMs))
+<div class="fixed top-16 right-4 z-40 flex justify-center items-stretch gap-1.5 flex-nowrap pt-4">
+  <span class="text-gray-600 font-semibold self-center text-xs">Voting ends in</span>
+  <div id="ballot-countdown" class="flex justify-center items-stretch gap-1.5 flex-nowrap">
+    <div class="bg-white rounded-xl shadow border p-1.5 w-13 h-13 flex flex-col items-center justify-center text-center shrink-0">
+      <div id="bc-days" class="text-sm font-black tabular-nums leading-none">0</div>
+      <div class="text-gray-600 font-semibold text-[10px] leading-tight">Days</div>
+    </div>
+    <div class="bg-white rounded-xl shadow border p-1.5 w-13 h-13 flex flex-col items-center justify-center text-center shrink-0">
+      <div id="bc-hours" class="text-sm font-black tabular-nums leading-none">00</div>
+      <div class="text-gray-600 font-semibold text-[10px] leading-tight">Hours</div>
+    </div>
+    <div class="bg-white rounded-xl shadow border p-1.5 w-13 h-13 flex flex-col items-center justify-center text-center shrink-0">
+      <div id="bc-minutes" class="text-sm font-black tabular-nums leading-none">00</div>
+      <div class="text-gray-600 font-semibold text-[10px] leading-tight">Min</div>
+    </div>
+    <div class="bg-white rounded-xl shadow border p-1.5 w-13 h-13 flex flex-col items-center justify-center text-center shrink-0">
+      <div id="bc-seconds" class="text-sm font-black tabular-nums leading-none">00</div>
+      <div class="text-gray-600 font-semibold text-[10px] leading-tight">Sec</div>
+    </div>
+  </div>
+</div>
+@endif
+
 <div class="flex flex-col items-center justify-center gap-y-6 m-7">
 
   {{-- Title --}}
@@ -126,9 +151,51 @@
   window.__BALLOT__ = {
     electionId: @json($election->id),
     positions:  @json($positionsPayload),
-		loginUrl:   @json(route('voter.login'))
+    loginUrl:   @json(route('voter.login')),
+    votingEndsAtMs: @json($votingEndsAtTimestampMs ?? null)
   };
 </script>
+
+{{-- Voting ends countdown timer --}}
+@if(!empty($votingEndsAtTimestampMs))
+<script>
+(function(){
+  const target = Number(window.__BALLOT__.votingEndsAtMs);
+  const elD = document.getElementById('bc-days');
+  const elH = document.getElementById('bc-hours');
+  const elM = document.getElementById('bc-minutes');
+  const elS = document.getElementById('bc-seconds');
+  if (!elD || !elH || !elM || !elS) return;
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    const now = Date.now();
+    let diff = target - now;
+
+    if (diff <= 0) {
+      window.location.href = @json(route('voter.ballot'));
+      return;
+    }
+
+    const secTotal = Math.floor(diff / 1000);
+    const days  = Math.floor(secTotal / 86400);
+    const hours = Math.floor((secTotal % 86400) / 3600);
+    const mins  = Math.floor((secTotal % 3600) / 60);
+    const secs  = secTotal % 60;
+
+    elD.textContent = String(days);
+    elH.textContent = pad(hours);
+    elM.textContent = pad(mins);
+    elS.textContent = pad(secs);
+  }
+
+  tick();
+  const timer = setInterval(tick, 1000);
+  window.addEventListener('beforeunload', () => clearInterval(timer));
+})();
+</script>
+@endif
 
 {{-- Stepper Logic (Vanilla JS) --}}
 <script>

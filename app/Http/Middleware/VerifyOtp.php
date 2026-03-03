@@ -33,7 +33,10 @@ class VerifyOtp
 				'buttonText' => 'Proceed'
 			]);
 		}
-		return redirect('/')->with([
+		$host = $request->getHost();
+		$loginRoute = $host === config('domains.admin') ? 'admin.login' : 'voter.login';
+
+		return redirect()->route($loginRoute)->with([
 			'error' => 'Please try logging in again',
 			'buttonText' => 'Go to log in'
 		]);

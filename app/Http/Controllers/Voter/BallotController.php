@@ -16,16 +16,103 @@ use Illuminate\Support\Facades\DB;
 
 class BallotController extends Controller
 {
+	private const TIMEZONE = 'Asia/Manila';
+	private const COUNTDOWN_DAYS_MAX = 10;
+
+	/**
+	 * Parse election start datetime (start_date + start_time), normalized to second precision.
+	 */
+	private static function parseStartAt(Election $election): ?Carbon
+	{
+		try {
+			return Carbon::parse(
+				(string) $election->start_date . ' ' . (string) $election->start_time,
+				self::TIMEZONE
+			)->startOfSecond();
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Parse election end datetime (end_date ?? start_date + end_time), normalized to second precision.
+	 */
+	private static function parseEndAt(Election $election): ?Carbon
+	{
+		try {
+			$endDate = $election->end_date
+				? (string) $election->end_date
+				: (string) $election->start_date;
+			return Carbon::parse($endDate . ' ' . (string) $election->end_time, self::TIMEZONE)->startOfSecond();
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Current time in election timezone, normalized to second precision for strict comparison.
+	 */
+	private static function nowStrict(): Carbon
+	{
+		return Carbon::now(self::TIMEZONE)->startOfSecond();
+	}
+
+	/**
+	 * Find the currently active election.
+	 * Strict: ballot shown only when now >= startAt AND now < endAt (end is exclusive).
+	 */
+	private function findActiveElection(Carbon $now): ?Election
+	{
+		$all = Election::query()->get();
+		foreach ($all as $election) {
+			$startAt = self::parseStartAt($election);
+			$endAt = self::parseEndAt($election);
+			if ($startAt && $endAt && $now->gte($startAt) && $now->lt($endAt)) {
+				return $election;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Find the next upcoming election (start datetime strictly in the future).
+	 * Countdown is shown only when the start date is within COUNTDOWN_DAYS_MAX calendar days from today
+	 * (e.g. today March 2, start March 12 → show countdown; start March 13 → show "no active election").
+	 */
+	private function findNextUpcomingElection(Carbon $now): ?array
+	{
+		$all = Election::query()->get();
+		$candidates = [];
+		foreach ($all as $election) {
+			$startAt = self::parseStartAt($election);
+			$endAt = self::parseEndAt($election);
+			if (!$startAt || !$endAt || $now->gte($endAt)) {
+				continue;
+			}
+			if ($startAt->gt($now)) {
+				$candidates[] = ['election' => $election, 'startAt' => $startAt, 'endAt' => $endAt];
+			}
+		}
+		usort($candidates, fn ($a, $b) => $a['startAt']->getTimestamp() <=> $b['startAt']->getTimestamp());
+		$next = $candidates[0] ?? null;
+		if (!$next) {
+			return null;
+		}
+		// Use calendar days: start date within 10 days from today → countdown; otherwise no active election
+		$todayStart = $now->copy()->startOfDay();
+		$startDateOnly = $next['startAt']->copy()->startOfDay();
+		$daysUntilStart = (int) $todayStart->diffInDays($startDateOnly, false);
+		if ($daysUntilStart > self::COUNTDOWN_DAYS_MAX) {
+			return null;
+		}
+		return $next;
+	}
+
 	public function showBallot(Request $request)
 	{
-		$now = Carbon::now('Asia/Manila');
-		$today = $now->toDateString();
+		$now = self::nowStrict();
 
-		$election = Election::query()
-			->whereDate('date', $today)
-			->whereTime('start_time', '<=', $now->format('H:i:s'))
-			->whereTime('end_time', '>=', $now->format('H:i:s'))
-			->first();
+		$election = $this->findActiveElection($now);
 
 		if ($election) {
 			$user = Auth::user();
@@ -69,32 +156,31 @@ class BallotController extends Controller
 				];
 			})->values()->all();
 
-			return view('voter.ballot', compact('election', 'positions', 'positionsPayload'));
+			$endAt = self::parseEndAt($election);
+			$votingEndsAtTimestampMs = $endAt ? $endAt->getTimestampMs() : null;
+
+			return view('voter.ballot', compact('election', 'positions', 'positionsPayload', 'votingEndsAtTimestampMs'));
 		}
 
-		$nextElection = Election::query()
-			->whereDate('date', '>=', $today)
-			->orderBy('date')
-			->orderBy('start_time')
-			->first();
+		$next = $this->findNextUpcomingElection($now);
 
-		if (!$nextElection) {
+		if (!$next) {
 			return view('voter.ballot_closed');
 		}
 
-		$startAt = Carbon::parse(
-			$nextElection->date . ' ' . $nextElection->start_time,
-			'Asia/Manila'
-		);
-
-		if ($now->diffInDays($startAt, false) > 10) {
-			return view('voter.ballot_closed');
-		}
+		$startAt = $next['startAt'];
+		$endAt = $next['endAt'];
+		$nextElection = $next['election'];
 
 		$startTimestampMs = $startAt->getTimestampMs();
+		$endTimestampMs = $endAt->getTimestampMs();
+		$endAtFormatted = $endAt->format('F j, Y g:i A');
+
 		return view('voter.ballot_countdown', [
-			'election'        => $nextElection,
+			'election'         => $nextElection,
 			'startTimestampMs' => $startTimestampMs,
+			'endTimestampMs'  => $endTimestampMs,
+			'endAtFormatted'   => $endAtFormatted,
 		]);
 	}
 
@@ -104,14 +190,12 @@ class BallotController extends Controller
 
 		$election = Election::findOrFail($request->input('election_id'));
 
-		// Re-check election is active (server-side gate)
-		$now = Carbon::now();
-		if (
-			$election->status == 'current' ||
-			$election->date !== $now->toDateString() ||
-			$now->format('H:i:s') < $election->start_time ||
-			$now->format('H:i:s') > $election->end_time
-		) {
+		// Re-check election window: strict (start inclusive, end exclusive)
+		$now = self::nowStrict();
+		$startAt = self::parseStartAt($election);
+		$endAt = self::parseEndAt($election);
+
+		if (!$startAt || !$endAt || $now->lt($startAt) || $now->gte($endAt)) {
 			return back()->withErrors(['election' => 'This election is not currently accepting votes.'])->withInput();
 		}
 

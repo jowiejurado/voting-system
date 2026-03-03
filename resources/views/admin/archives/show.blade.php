@@ -26,7 +26,7 @@
         {{ $election->title }}
       </h1>
       <div class="mt-1 text-sm text-gray-600">
-        {{ \Carbon\Carbon::parse($election->date)->format('F d, Y') }}
+        {{ \Carbon\Carbon::parse($election->start_date)->format('F d, Y') }}
         @if($election->start_time && $election->end_time)
           · {{ $election->start_time }} – {{ $election->end_time }}
         @endif

@@ -49,11 +49,17 @@
 	@endif
 
 	<main class="relative" style="background-image:url('{{ asset('images/bg-image-1.jpg') }}'); background-size:cover; background-position:center;">
-		<a href="{{ route('home') }}" class="absolute m-5 rounded-full p-2 cursor-pointer text-white bg-black flex items-center justify-center text-center">
-			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-			</svg>
-		</a>
+		@php
+			$loginRoute = request()->getHost() === config('domains.admin') ? 'admin.login' : 'voter.login';
+			$isLoginPage = in_array(Route::currentRouteName(), ['admin.login', 'voter.login'], true);
+		@endphp
+		@if(!$isLoginPage)
+			<a href="{{ route($loginRoute) }}" class="absolute m-5 rounded-full p-2 cursor-pointer text-white bg-black flex items-center justify-center text-center" aria-label="Back to login">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+				</svg>
+			</a>
+		@endif
 
 		<div class="min-h-screen flex items-center">
 			@yield('content')

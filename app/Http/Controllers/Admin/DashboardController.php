@@ -27,9 +27,9 @@ class DashboardController extends Controller
 		 * We completely ignore elections with date < today,
 		 * even if is_active = 1.
 		 */
-		$currentElection = Election::whereDate('date', '>=', $today)
-			->whereDate('date', '<=', $cutoff)
-			->orderBy('date')          // then the earliest by date
+		$currentElection = Election::whereDate('start_date', '>=', $today)
+			->whereDate('start_date', '<=', $cutoff)
+			->orderBy('start_date')          // then the earliest by date
 			->first();
 
 		// Base stats: voters are global; others are election-specific

@@ -30,9 +30,11 @@
       <thead>
         <tr class="border-b-2 border-gray-400">
           <th class="py-3 px-6 text-center">Election Title</th>
-					<th class="py-3 px-6 text-center w-[15%]">Date</th>
-					<th class="py-3 px-6 text-center w-[10%]">Time</th>
-					<th class="py-3 px-6 text-center w-[10%]">Time Ended</th>
+					<th class="py-3 px-6 text-center w-[15%]">Start Date</th>
+					<th class="py-3 px-6 text-center w-[10%]">Start Time</th>
+					<th class="py-3 px-6 text-center w-[15%]">End Date</th>
+					<th class="py-3 px-6 text-center w-[10%]">End Time</th>
+          <th class="py-3 px-6 text-center w-[18%]">Created At</th>
           <th class="w-56 py-3 text-center">Tools</th>
         </tr>
       </thead>
@@ -41,21 +43,28 @@
           <tr class="border-b-2 border-gray-400 last:border-b-0">
             <td class="py-3 px-6 text-center">{{ $election->title }}</td>
 						<td class="py-3 px-6 text-center w-[15%]">
-							{{ \Carbon\Carbon::parse($election->date)->format('F d, Y') }}
+							{{ \Carbon\Carbon::parse($election->start_date)->format('F d, Y') }}
 						</td>
 						<td class="py-3 px-6 text-center w-[10%]">
 							{{ \Carbon\Carbon::parse($election->start_time)->format('Hi') }}H
 						</td>
+						<td class="py-3 px-6 text-center w-[15%]">
+							{{ $election->end_date ? \Carbon\Carbon::parse($election->end_date)->format('F d, Y') : '-' }}
+						</td>
 						<td class="py-3 px-6 text-center w-[10%]">
 							{{ \Carbon\Carbon::parse($election->end_time)->format('Hi') }}H
 						</td>
+            <td class="py-3 px-6 text-center w-[18%]">
+              {{ optional($election->created_at)->timezone('Asia/Manila')->format('F d, Y H:i') }}
+            </td>
             <td class="py-3 text-center">
               <button type="button"
 											class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
 											data-modal-open="#election-modal"
 											data-id="{{ $election->id }}"
 											data-title="{{ $election->title }}"
-											data-date="{{ \Carbon\Carbon::parse($election->date)->format('Y-m-d') }}"
+											data-start_date="{{ \Carbon\Carbon::parse($election->start_date)->format('Y-m-d') }}"
+											data-end_date="{{ $election->end_date ? \Carbon\Carbon::parse($election->end_date)->format('Y-m-d') : '' }}"
 											data-start_time="{{ \Carbon\Carbon::parse($election->start_time)->format('H:i:s') }}"
   										data-end_time="{{ \Carbon\Carbon::parse($election->end_time)->format('H:i:s') }}">
 								Edit
@@ -64,7 +73,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="5" class="py-6 text-center text-gray-500">No elections yet.</td>
+            <td colspan="7" class="py-6 text-center text-gray-500">No elections yet.</td>
           </tr>
         @endforelse
       </tbody>
@@ -113,15 +122,15 @@
   </div>
 
 	<div>
-    <label class="block text-sm mb-1">Date</label>
-    <input type="date" name="date" id="date"
+    <label class="block text-sm mb-1">Start Date</label>
+    <input type="date" name="start_date" id="start_date"
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
-           value="{{ old('date') }}" required>
-    @error('date') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+           value="{{ old('start_date') }}" required>
+    @error('start_date') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
 	<div>
-		<label class="block text-sm mb-1">Starting Time</label>
+		<label class="block text-sm mb-1">Start Time</label>
 		<input
 			type="time"
 			name="start_time"
@@ -135,7 +144,15 @@
 	</div>
 
 	<div>
-    <label class="block text-sm mb-1">Time Ended</label>
+    <label class="block text-sm mb-1">End Date</label>
+    <input type="date" name="end_date" id="end_date"
+           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
+           value="{{ old('end_date') }}" required>
+    @error('end_date') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
+	<div>
+    <label class="block text-sm mb-1">End Time</label>
     <input type="time" name="end_time" id="end_time" step="1"
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('end_time') }}" required>
@@ -213,7 +230,8 @@
   const modalTitleEl  = electionModal.querySelector('[data-modal-title]');
   const submitBtn     = electionModal.querySelector('[data-modal-submit]');
   const titleInp      = document.getElementById('title');
-	const dateInp       = document.getElementById('date');
+	const startDateInp  = document.getElementById('start_date');
+	const endDateInp    = document.getElementById('end_date');
 	const startTimeInp  = document.getElementById('start_time');
 	const endTimeInp    = document.getElementById('end_time');
 
@@ -225,8 +243,8 @@
       modalTitleEl.textContent = 'Add Election';
       submitBtn.textContent = 'Submit';
       titleInp.value = '';
-			titleInp.value = '';
-			dateInp.value = '';
+			startDateInp.value = '';
+			endDateInp.value = '';
 			startTimeInp.value = '';
 			endTimeInp.value = '';
       return;
@@ -243,7 +261,8 @@
       submitBtn.textContent = 'Update';
 
       titleInp.value = editBtn.dataset.title || '';
-			dateInp.value = editBtn.dataset.date || '';
+			startDateInp.value = editBtn.dataset.start_date || '';
+			endDateInp.value = editBtn.dataset.end_date || '';
 			startTimeInp.value = editBtn.dataset.start_time || '';
 			endTimeInp.value = editBtn.dataset.end_time || '';
       return;

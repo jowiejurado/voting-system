@@ -12,7 +12,8 @@ class Election extends Model
 
 	protected $fillable = [
 		'title',
-		'date',
+		'start_date',
+		'end_date',
 		'start_time',
 		'end_time',
 		'status',
@@ -20,7 +21,8 @@ class Election extends Model
 
 	protected array $encryptable = [
 		'title',
-		'date',
+		'start_date',
+		'end_date',
 		'start_time',
 		'end_time',
 		'status'

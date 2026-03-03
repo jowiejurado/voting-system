@@ -22,24 +22,29 @@ class ElectionController extends Controller
 		foreach ($toCheck as $item) {
 			$newStatus = $item->status;
 			$today = $now->toDateString();
-			$itemDate = \Illuminate\Support\Carbon::parse($item->date, 'Asia/Manila')->toDateString();
+			$startDate = \Illuminate\Support\Carbon::parse((string) $item->start_date, 'Asia/Manila')->toDateString();
+			$endDate = $item->end_date
+				? \Illuminate\Support\Carbon::parse((string) $item->end_date, 'Asia/Manila')->toDateString()
+				: $startDate;
 
-			if ($itemDate < $today) {
+			if ($endDate < $today) {
 				// Past date -> completed
 				$newStatus = 'completed';
-			} elseif ($itemDate > $today) {
+			} elseif ($startDate > $today) {
 				// Future date -> pending
 				$newStatus = 'pending';
 			} else {
-				// Today -> evaluate time window
+				// Within date range (start <= today <= end) -> use full start/end datetime
 				try {
-					$startAt = \Illuminate\Support\Carbon::parse($itemDate . ' ' . (string) $item->start_time, 'Asia/Manila');
-					$endAt = \Illuminate\Support\Carbon::parse($itemDate . ' ' . (string) $item->end_time, 'Asia/Manila');
+					$startAt = \Illuminate\Support\Carbon::parse($startDate . ' ' . (string) $item->start_time, 'Asia/Manila');
+					$endAt = \Illuminate\Support\Carbon::parse($endDate . ' ' . (string) $item->end_time, 'Asia/Manila');
 
 					if ($now->lt($startAt)) {
 						$newStatus = 'pending';
-					} else {
+					} elseif ($now->gt($endAt)) {
 						$newStatus = 'completed';
+					} else {
+						$newStatus = 'current'; // in progress until end_date + end_time
 					}
 				} catch (\Throwable $e) {
 					// If parsing fails, default to completed to archive invalidly timed elections
@@ -67,11 +72,14 @@ class ElectionController extends Controller
 			return (string) $item->status !== 'completed';
 		});
 
-		// Sort by date asc then end_time asc using Carbon parsing
+		// Sort by end timestamp asc using Carbon parsing
 		$sorted = $filtered->sortBy(function ($item) {
 			try {
-				$d = \Illuminate\Support\Carbon::parse((string) $item->date, 'Asia/Manila')->toDateString();
-				$et = \Illuminate\Support\Carbon::parse($d . ' ' . (string) $item->end_time, 'Asia/Manila')->timestamp;
+				$startDate = \Illuminate\Support\Carbon::parse((string) $item->start_date, 'Asia/Manila')->toDateString();
+				$endDate = $item->end_date
+					? \Illuminate\Support\Carbon::parse((string) $item->end_date, 'Asia/Manila')->toDateString()
+					: $startDate;
+				$et = \Illuminate\Support\Carbon::parse($endDate . ' ' . (string) $item->end_time, 'Asia/Manila')->timestamp;
 				return $et;
 			} catch (\Throwable $e) {
 				return PHP_INT_MAX;
@@ -100,9 +108,10 @@ class ElectionController extends Controller
 	{
 		$data = $request->validate([
 			'title'       => 'required|string|max:255',
-			'date'  			=> 'required',
-			'start_time'  => 'required',
-			'end_time'    => 'required',
+			'start_date'  => 'required|date',
+			'end_date'    => 'required|date|after_or_equal:date',
+			'start_time'  => 'required|date_format:H:i:s',
+			'end_time'    => 'required|date_format:H:i:s',
 			// 'admin_id'    => 'required|string',
 			// 'password'    => 'required|string',
 		]);
@@ -112,7 +121,8 @@ class ElectionController extends Controller
 
 		Election::create([
 			'title'       => $data['title'],
-			'date'  			=> $data['date'],
+			'start_date'  => $data['start_date'],
+			'end_date'    => $data['end_date'],
 			'start_time'  => $data['start_time'],
 			'end_time'  	=> $data['end_time'],
 		]);
@@ -128,9 +138,10 @@ class ElectionController extends Controller
 	{
 		$data = $request->validate([
 			'title'       => 'required|string|max:255',
-			'date'  			=> 'required',
-			'start_time'  => 'required',
-			'end_time'    => 'required',
+			'start_date'  => 'required|date',
+			'end_date'    => 'required|date|after_or_equal:date',
+			'start_time'  => 'required|date_format:H:i:s',
+			'end_time'    => 'required|date_format:H:i:s',
 			// 'admin_id'    => 'required|string',
 			// 'password'    => 'required|string',
 		]);
@@ -140,7 +151,8 @@ class ElectionController extends Controller
 
 		$election->update([
 			'title'       => $data['title'],
-			'date'  			=> $data['date'],
+			'start_date'  => $data['start_date'],
+			'end_date'    => $data['end_date'],
 			'start_time'  => $data['start_time'],
 			'end_time'  	=> $data['end_time'],
 		]);
