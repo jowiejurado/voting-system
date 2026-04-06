@@ -3,7 +3,7 @@
 use App\Http\Controllers\Auth\UnifiedAuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => view('home'))->name('home');
+Route::get('/', fn () => redirect()->route('auth.login'))->name('home');
 
 Route::prefix('auth')->name('auth.')->group(function () {
 	Route::get('login', [UnifiedAuthController::class, 'showLogin'])->name('login');
