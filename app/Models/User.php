@@ -34,6 +34,7 @@ class User extends Authenticatable
 		'is_active',
 		'last_signed_in',
 		'last_signed_out',
+		'login_locked_until',
 		'face_descriptor'
 	];
 
@@ -69,6 +70,7 @@ class User extends Authenticatable
 			'is_active' => 'boolean',
 			'last_signed_in' => 'datetime',
 			'last_signed_out' => 'datetime',
+			'login_locked_until' => 'datetime',
 		];
 	}
 
@@ -85,5 +87,12 @@ class User extends Authenticatable
 	public function securityQuestions(): HasMany
 	{
 		return $this->hasMany(UserSecurityQuestion::class);
+	}
+
+	public function hasRegisteredFace(): bool
+	{
+		$d = $this->face_descriptor;
+
+		return is_array($d) && count($d) === 128;
 	}
 }

@@ -50,8 +50,8 @@
 
 	<main class="relative" style="background-image:url('{{ asset('images/bg-image-1.jpg') }}'); background-size:cover; background-position:center;">
 		@php
-			$loginRoute = request()->getHost() === config('domains.admin') ? 'admin.login' : 'voter.login';
-			$isLoginPage = in_array(Route::currentRouteName(), ['admin.login', 'voter.login'], true);
+			$loginRoute = 'auth.login';
+			$isLoginPage = in_array(Route::currentRouteName(), ['auth.login', 'auth.password.request', 'home'], true);
 		@endphp
 		@if(!$isLoginPage)
 			<a href="{{ route($loginRoute) }}" class="absolute m-5 rounded-full p-2 cursor-pointer text-white bg-black flex items-center justify-center text-center" aria-label="Back to login">

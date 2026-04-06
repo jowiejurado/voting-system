@@ -151,7 +151,7 @@
   window.__BALLOT__ = {
     electionId: @json($election->id),
     positions:  @json($positionsPayload),
-    loginUrl:   @json(route('voter.login')),
+    loginUrl:   @json(route('auth.login')),
     votingEndsAtMs: @json($votingEndsAtTimestampMs ?? null)
   };
 </script>

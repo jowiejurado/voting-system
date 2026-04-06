@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\UserType;
 use App\Http\Controllers\Controller;
+use App\Support\FaceMetric;
+use App\Support\LoginVerificationLimits;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Support\FaceMetric;
 
 class AdminFaceController extends Controller
 {
@@ -14,16 +16,22 @@ class AdminFaceController extends Controller
 		$user = Auth::user();
 		abort_unless($user, 403);
 
-		if (!$user->face_descriptor || count($user->face_descriptor) !== 128) {
+		$isSystem = strtolower((string) $user->type) === UserType::SYSTEM_ADMIN->value;
+		if (! $isSystem && ! session('login_chose_face')) {
+			return redirect()->route('admin.verify.method');
+		}
+
+		if (! $user->face_descriptor || count($user->face_descriptor) !== 128) {
 			return redirect()->route('admin.logout')->with([
 				'error' => 'Admin face is not yet registered. Please contact your system admin.',
-				'buttonText' => 'Okay'
+				'buttonText' => 'Okay',
 			]);
 		}
 
 		return view('admin.auth.face', [
 			'threshold' => 0.6,
-			'nextUrl'   => route('admin.dashboard'),
+			'nextUrl' => route('admin.dashboard'),
+			'faceVerifyRoute' => route('admin.face.verify'),
 		]);
 	}
 
@@ -59,13 +67,32 @@ class AdminFaceController extends Controller
 
 		$pass = $distance <= $threshold;
 
-		if (!$pass) {
+		if (! $pass) {
+			$attempts = (int) session('login_face_attempts', 0) + 1;
+			session(['login_face_attempts' => $attempts]);
+
+			if ($attempts >= LoginVerificationLimits::FACE_ATTEMPTS) {
+				session([
+					'login_security_unlocked' => true,
+					'login_chose_face' => false,
+				]);
+
+				return redirect()->route('admin.security.show')->with([
+					'error' => 'Face verification attempts exhausted. Answer your security question.',
+					'buttonText' => 'Proceed',
+				]);
+			}
+
 			return back()
 				->withErrors(['face' => 'Face did not match. Make sure your face is well lit and centered.'])
 				->withInput();
 		}
 
-		session(['face_verified_at' => now()->toIso8601String()]);
+		$request->session()->forget(['login_face_attempts', 'login_chose_face', 'login_chose_otp']);
+		session([
+			'full_login_complete' => true,
+			'face_verified_at' => now()->toIso8601String(),
+		]);
 
 		return redirect()->to($request->input('next', route('admin.dashboard')))
 			->with([

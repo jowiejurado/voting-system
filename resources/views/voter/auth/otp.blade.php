@@ -4,7 +4,7 @@
 	$maskedEmail = '';
 
 	if (!Auth::user()) {
-		redirect()->route('voter.login');
+		redirect()->route('auth.login');
 	} else {
 		$phone  = (string) Auth::user()->phone_number;
 		$maskLen = max(strlen($phone) - 7, 0);

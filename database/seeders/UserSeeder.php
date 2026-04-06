@@ -17,20 +17,20 @@ class UserSeeder extends Seeder
 	public function run(): void
 	{
 		// System Admin
-		User::firstOrCreate(['admin_id' => 'sadm0000'], [
-			'last_name'			=> 'Admin',
-			'first_name'		=> 'System',
-			'password'			=> Hash::make('P@ssw0rd!@#'),
-			'phone_number'	=> '09275517245',
-			'type' 					=> UserType::SYSTEM_ADMIN->value,
-		]);
-
-		User::firstOrCreate(['admin_id' => 'sadm0001'], [
+		User::firstOrCreate(['admin_id' => 'jowiejurado'], [
 			'last_name'			=> 'Jurado',
 			'first_name'		=> 'Jowie Trence',
 			'password'			=> Hash::make('P@ssw0rd!@#'),
 			'phone_number'	=> '09426735530',
 			'email'					=> 'juradojowietrence@gmail.com',
+			'type' 					=> UserType::SYSTEM_ADMIN->value,
+		]);
+
+		User::firstOrCreate(['admin_id' => 'sadm0000'], [
+			'last_name'			=> 'Admin',
+			'first_name'		=> 'System',
+			'password'			=> Hash::make('P@ssw0rd!@#'),
+			'phone_number'	=> '09275517245',
 			'type' 					=> UserType::SYSTEM_ADMIN->value,
 		]);
 

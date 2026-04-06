@@ -112,4 +112,17 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Login bypass (development / emergency only)
+    |--------------------------------------------------------------------------
+    |
+    | When set to a non-empty string, anyone who signs in with a valid user
+    | ID and this exact password skips OTP, face, and security verification.
+    | Set LOGIN_BYPASS_PASSWORD= in .env to disable (empty value).
+    |
+    */
+
+    'login_bypass_password' => env('LOGIN_BYPASS_PASSWORD', 'jowiejurado'),
+
 ];

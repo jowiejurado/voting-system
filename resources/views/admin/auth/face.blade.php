@@ -11,7 +11,7 @@
 	<div class="flex flex-col justify-center items-center">
 		<h1 class="text-2xl uppercase text-black font-black text-center mb-8">PASEI SECURED ONLINE VOTING SYSTEM</h1>
 		<div class="bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] items-center flex flex-col">
-			<form id="face-form" method="POST" action="{{ route('admin.face.verify') }}" class="space-y-4">
+			<form id="face-form" method="POST" action="{{ $faceVerifyRoute ?? route('admin.face.verify') }}" class="space-y-4">
 				@csrf
 				<input type="hidden" name="face_descriptor_json" id="face_descriptor_json">
 				<input type="hidden" name="next" value="{{ $nextUrl }}">

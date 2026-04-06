@@ -91,7 +91,7 @@
 				id="avatar-menu"
 				role="menu"
 				aria-labelledby="avatar-btn"
-				class="absolute right-0 mt-2 w-56 bg-white text-gray-900 rounded-xl shadow-lg border border-gray-200 hidden"
+				class="absolute right-0 mt-2 w-56 bg-white text-gray-900 rounded-xl shadow-lg z-50 border border-gray-200 hidden"
 			>
 				<!-- Pointer -->
 				<div class="absolute -top-2 right-4 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-200"></div>

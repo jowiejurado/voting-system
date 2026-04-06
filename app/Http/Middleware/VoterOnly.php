@@ -18,7 +18,7 @@ class VoterOnly
 	{
 		// Not logged in
 		if (! Auth::check()) {
-			return redirect()->route('voter.login')->with([
+			return redirect()->route('auth.login')->with([
 				'error' => 'Unauthorized',
 				'buttonText' => 'Go back to log in',
 			]);
@@ -32,7 +32,7 @@ class VoterOnly
 			// Optional: make sure they’re not kept logged in
 			Auth::logout();
 
-			return redirect()->route('voter.login')->with([
+			return redirect()->route('auth.login')->with([
 				'error' => 'Unauthorized',
 				'buttonText' => 'Go back to log in',
 			]);

@@ -1,4 +1,4 @@
-@php($title = 'Admin - Log In | Voting System')
+@php($title = 'Log In | Voting System')
 @extends('layouts.auth')
 
 @section('content')
@@ -65,45 +65,44 @@
   />
 
   <div class="panel bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] w-full md:w-auto">
-    <form id="admin-login-form" method="post" action="{{ route('admin.login.submit') }}" class="flex flex-col items-center gap-[24px]">
+    <form id="admin-login-form" method="post" action="{{ $loginAction ?? route('auth.login.submit') }}" class="flex flex-col items-center gap-[24px]">
       @csrf
-      <h4 class="text-lg text-black font-bold">Admin 1st Step Authentication - Log in</h4>
+      <h4 class="text-lg text-black font-bold">Sign in</h4>
 
-      <input type="text" id="adminId" name="adminId" required placeholder="ADMIN ID"
+      <input type="text" id="adminId" name="adminId" required placeholder="ID"
              class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
 
       <input type="password" id="password" name="password" required placeholder="PASSWORD"
              class="w-100 py-[16px] px-[24px] rounded-3xl bg-gray-100 text-black outline-none border-none">
 
-     {{-- reCAPTCHA v2 Checkbox --}}
-      {!! NoCaptcha::display([
-				// Optional attributes:
-				// 'data-theme' => 'light', // or 'dark'
-				'data-size'  => 'normal', // or 'compact'
-      ]) !!}
+      @if($recaptchaEnabled ?? true)
+        {!! NoCaptcha::display([
+          'data-size'  => 'normal',
+        ]) !!}
 
-      @error('g-recaptcha-response')
-        <div class="text-red-600 text-sm -mt-2">{{ $message }}</div>
-      @enderror
+        @error('g-recaptcha-response')
+          <div class="text-red-600 text-sm -mt-2">{{ $message }}</div>
+        @enderror
+      @endif
 
 			<button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">
         Proceed
       </button>
-      <a href="{{ route('admin.password.request') }}" class="text-blue-600 font-medium">Forgot password?</a>
+      <a href="{{ route('auth.password.request') }}" class="text-blue-600 font-medium text-sm">Forgot password?</a>
     </form>
   </div>
 </div>
 @endsection
 
 @push('scripts')
-  {{-- Loads the reCAPTCHA v2 script --}}
-  {!! NoCaptcha::renderJs() !!}
+  @if($recaptchaEnabled ?? true)
+    {!! NoCaptcha::renderJs() !!}
+  @endif
 
 	<script>
-		// Wait 5s after all assets (incl. logo) are loaded, then run the animation.
 		window.addEventListener('load', () => {
 			const wrap = document.getElementById('auth-anim');
-			const SHOW_AFTER_MS = 2500; // 5 seconds
+			const SHOW_AFTER_MS = 2500;
 			setTimeout(() => wrap.classList.add('show-form'), SHOW_AFTER_MS);
 		});
 	</script>

@@ -21,7 +21,7 @@
       <div class="px-8 pb-10">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <a
-            href="{{ route('admin.login') }}"
+            href="{{ route('auth.login') }}"
             class="group relative block rounded-2xl border border-slate-200 bg-white hover:border-red-300 shadow-sm hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label="Admin Login"
           >
@@ -47,7 +47,7 @@
 
           {{-- Voter Card --}}
           <a
-            href="{{ route('voter.login') }}"
+            href="{{ route('auth.login') }}"
             class="group relative block rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 shadow-sm hover:shadow-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label="Voter Login"
           >
