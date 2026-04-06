@@ -44,7 +44,7 @@
             <td class="py-3 px-6">{{ $candidate->position->name ?? '' }}</td>
 						<td class="py-3 px-6">{{ $candidate->first_name }}</td>
 						<td class="py-3 px-6">{{ $candidate->last_name }}</td>
-            <td class="py-3 text-center">{{ $candidate->organization_name }}</td>
+            <td class="py-3 text-center">{{ $candidate->organization?->name ?? '' }}</td>
             <td class="py-3 text-center">
               <button type="button"
 											class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
@@ -52,9 +52,10 @@
 											data-id="{{ $candidate->id }}"
 											data-first_name="{{ $candidate->first_name }}"
 											data-last_name="{{ $candidate->last_name }}"
-											data-organization_name="{{ $candidate->organization_name }}"
+											data-organization="{{ $candidate->organization_id }}"
 											data-position="{{ $candidate->position_id }}"
-											data-election="{{ $candidate->election_id }}">
+											data-election="{{ $candidate->election_id }}"
+											data-election-title="{{ $candidate->election->title ?? '' }}">
 								Edit
 							</button>
             </td>
@@ -103,12 +104,20 @@
 
 	<div>
     <label class="block text-sm mb-1">Election</label>
-   	<select name="election" id="election" class="border-2 border-gray-400 py-2 px-2 w-full">
-			<option value="" disabled selected>Select election</option>
-			@foreach($elections as $id => $election)
-				<option value="{{ old('election') ?? $id }}">{{ $election }}</option>
-			@endforeach
-		</select>
+		@if($lockedUpcomingElection)
+			<input type="hidden" name="election" id="candidate-election" value="{{ old('election', $lockedUpcomingElection->id) }}">
+			<div id="candidate-election-display"
+				class="border-2 border-gray-400 py-2 px-2 w-full bg-gray-100 text-gray-700 rounded-sm select-none"
+				role="status" aria-live="polite">{{ $lockedUpcomingElection->title }}</div>
+			<p class="text-xs text-gray-500 mt-1">Upcoming election (ballot countdown within {{ $ballotCountdownDaysMax }} days) is fixed and cannot be changed.</p>
+		@else
+			<select name="election" id="candidate-election" class="border-2 border-gray-400 py-2 px-2 w-full">
+				<option value="" disabled @selected(old('election') === null || old('election') === '')>Select election</option>
+				@foreach($elections as $id => $election)
+					<option value="{{ $id }}" @selected((string) old('election') === (string) $id)>{{ $election }}</option>
+				@endforeach
+			</select>
+		@endif
     @error('election') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
@@ -121,6 +130,17 @@
 			@endforeach
 		</select>
     @error('position') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+  </div>
+
+	<div>
+    <label class="block text-sm mb-1">Organization</label>
+   	<select name="organization" id="organization" class="border-2 border-gray-400 py-2 px-2 w-full">
+			<option value="" disabled selected>Select organization</option>
+			@foreach($organizations as $id => $organization)
+				<option value="{{ $id }}">{{ $organization }}</option>
+			@endforeach
+		</select>
+    @error('organization') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
   <div>
@@ -137,14 +157,6 @@
            class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
            value="{{ old('last_name') }}" placeholder="e.g., Dela Cruz" required>
     @error('last_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
-  </div>
-
-	<div>
-    <label class="block text-sm mb-1">Organization Name</label>
-    <input type="text" name="organization_name" id="organization_name"
-           class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
-           value="{{ old('organization_name') }}" placeholder="e.g., IT, Marketing" required>
-    @error('organization_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
   {{-- <x-ui.admin-auth class="pt-2" /> --}}
@@ -220,9 +232,24 @@
 
   const firstNameInp       	= document.getElementById('first_name');
   const lastNameInp        	= document.getElementById('last_name');
-	const orgNameInp       		= document.getElementById('organization_name');
+  const organizationInp   	= document.getElementById('organization');
   const positionInp        	= document.getElementById('position');
-	const electionInp       	= document.getElementById('election');
+	const electionInp       	= document.getElementById('candidate-election');
+	const electionDisplayEl	= document.getElementById('candidate-election-display');
+	const electionLocked    	= @json((bool) $lockedUpcomingElection);
+	const lockedElectionId  	= @json($lockedUpcomingElection ? (string) $lockedUpcomingElection->id : '');
+	const lockedElectionTitle	= @json($lockedUpcomingElection ? (string) $lockedUpcomingElection->title : '');
+
+	function setElectionField(electionId, electionTitle) {
+		if (!electionInp) return;
+		electionInp.value = electionId || '';
+		if (typeof electionInp.defaultValue === 'string') {
+			electionInp.defaultValue = electionId || '';
+		}
+		if (electionDisplayEl) {
+			electionDisplayEl.textContent = electionTitle || '';
+		}
+	}
 
   document.addEventListener('click', (e) => {
     if (e.target.closest('#btn-add')) {
@@ -232,8 +259,12 @@
       submitBtn.textContent = 'Submit';
       firstNameInp.value = '';
       lastNameInp.value  = '';
-			orgNameInp.value = '';
-      electionInp.value  = '';
+			if (organizationInp) organizationInp.value = '';
+			if (electionLocked) {
+				setElectionField(lockedElectionId, lockedElectionTitle);
+			} else if (electionInp) {
+				electionInp.value = '';
+			}
 			positionInp.value = '';
       return;
     }
@@ -250,8 +281,14 @@
 
 			firstNameInp.value = editBtn.dataset.first_name || '';
       lastNameInp.value  = editBtn.dataset.last_name || '';
-			orgNameInp.value = editBtn.dataset.organization_name || '';
-      electionInp.value  = editBtn.dataset.election || '';
+			if (organizationInp) organizationInp.value = editBtn.dataset.organization || '';
+			const eid = editBtn.dataset.election || '';
+			const etitle = editBtn.dataset.electionTitle || '';
+			if (electionLocked) {
+				setElectionField(eid, (etitle || lockedElectionTitle));
+			} else if (electionInp) {
+				electionInp.value = eid;
+			}
 			positionInp.value = editBtn.dataset.position || '';
       return;
     }

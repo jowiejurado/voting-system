@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminFaceController;
+use App\Http\Controllers\Admin\ArchiveElectionController as AdminArchiveController;
 use App\Http\Controllers\Admin\CandidateController as AdminCandidateController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ElectionController as AdminElectionController;
+use App\Http\Controllers\Admin\OrganizationController as AdminOrganizationController;
 use App\Http\Controllers\Admin\PositionController as AdminPositionController;
 use App\Http\Controllers\Admin\VoteController as AdminVoteController;
 use App\Http\Controllers\Admin\VoterController as AdminVoterController;
-use App\Http\Controllers\Admin\ElectionController as AdminElectionController;
-use App\Http\Controllers\Admin\ArchiveElectionController as AdminArchiveController;
 use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\UnifiedAuthController;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +46,7 @@ Route::name('admin.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::apiResource('voters', AdminVoterController::class);
         Route::apiResource('positions', AdminPositionController::class);
+        Route::apiResource('organizations', AdminOrganizationController::class)->only(['index', 'store', 'update']);
         Route::apiResource('candidates', AdminCandidateController::class);
         Route::apiResource('elections', AdminElectionController::class);
         Route::get('archives', [AdminArchiveController::class, 'index'])->name('archives.index');

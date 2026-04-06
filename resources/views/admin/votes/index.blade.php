@@ -40,7 +40,7 @@
 							{{ $vote->candidate['first_name'] }} {{ $vote->candidate['last_name'] }}
 						</td>
 						<td class="py-3 px-6 text-center">
-							{{ $vote->candidate['organization_name'] }}
+							{{ $vote->candidate?->organization?->name }}
 						</td>
           </tr>
         @empty

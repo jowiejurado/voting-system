@@ -134,6 +134,14 @@
 							Positions
 						</a>
 					</li>
+					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.organizations.index') ? 'bg-[#d0352f]' : '' }}">
+						<a href="{{ route('admin.organizations.index') ?? '#' }}" class="flex items-center gap-3">
+							<span class="inline-grid place-items-center w-7 h-auto">
+								<img src={{ asset('icons/election.png') }} alt="organizations" width="50" height="50" />
+							</span>
+							Organizations
+						</a>
+					</li>
 					<li class="px-3 py-2 hover:bg-[#d0352f] {{ request()->routeIs('admin.candidates.index') ? 'bg-[#d0352f]' : '' }}">
 						<a href="{{ route('admin.candidates.index') ?? '#' }}" class="flex items-center gap-3">
 							<span class="inline-grid place-items-center w-7 h-auto">
