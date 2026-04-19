@@ -180,6 +180,13 @@ class UnifiedAuthController extends Controller
 			])->withInput($request->only('adminId'));
 		}
 
+		if (! $user->is_active) {
+			return back()->with([
+				'error' => 'This account has been deactivated. Contact a system administrator if you need access.',
+				'buttonText' => 'TRY AGAIN',
+			])->withInput($request->only('adminId'));
+		}
+
 		if ($user->login_locked_until && $user->login_locked_until->isFuture()) {
 			return back()->with([
 				'error' => 'This account is locked after failed verification. Try again after '

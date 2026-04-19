@@ -38,6 +38,15 @@ class AdminOnly
 			]);
 		}
 
+		if (! Auth::user()->is_active) {
+			Auth::logout();
+
+			return redirect()->route('auth.login')->with([
+				'error' => 'This account has been deactivated.',
+				'buttonText' => 'Go back to log in',
+			]);
+		}
+
 		$response = $next($request);
 
 		// Prevent back button from showing cached authenticated pages after logout

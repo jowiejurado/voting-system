@@ -46,8 +46,9 @@
           <th class="py-3 text-center">First Name</th>
           <th class="py-3 text-center">Admin ID</th>
           <th class="py-3 text-center">Role</th>
+          <th class="py-3 text-center">Status</th>
           <th class="py-3 text-center">Last Signed In & Out</th>
-          <th class="w-56 py-3 text-center">Tools</th>
+          <th class="w-72 py-3 text-center">Tools</th>
         </tr>
       </thead>
       <tbody class="text-center">
@@ -58,6 +59,13 @@
             <td class="py-3 px-6">{{ $admin->admin_id }}</td>
             <td class="py-3 px-6">
               {{ $admin->type === 'system-admin' ? 'System Admin' : 'Admin' }}
+            </td>
+            <td class="py-3 px-6">
+              @if($admin->is_active)
+                <span class="inline-block rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1">Active</span>
+              @else
+                <span class="inline-block rounded-full bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1">Inactive</span>
+              @endif
             </td>
             <td class="py-3 px-6 flex flex-col items-center text-center">
               <span>
@@ -76,7 +84,8 @@
                         data-id="{{ $admin->id }}"
                         data-first_name="{{ $admin->first_name }}"
                         data-last_name="{{ $admin->last_name }}"
-												data-phone_number="{{ $admin->phone_number }}">
+                        data-phone_number="{{ $admin->phone_number }}"
+                        data-email="{{ $admin->email }}">
                   Edit
                 </button>
               @else
@@ -87,15 +96,35 @@
                         data-id="{{ $admin->id }}"
                         data-first_name="{{ $admin->first_name }}"
                         data-last_name="{{ $admin->last_name }}"
-                        data-phone_number="{{ $admin->phone_number }}">
+                        data-phone_number="{{ $admin->phone_number }}"
+                        data-email="{{ $admin->email }}">
                   Edit
                 </button>
+              @endif
+              @if (Auth::user() && Auth::user()->type == 'system-admin' && $admin->id !== Auth::id())
+                @if($admin->is_active)
+                  <form method="post" action="{{ route('admin.deactivate', $admin) }}" class="inline-block ml-1"
+                        onsubmit="return confirm('Deactivate this admin? They will not be able to sign in until reactivated.');">
+                    @csrf
+                    <button type="submit" class="bg-amber-700 hover:bg-amber-800 text-white px-3 py-[6px] text-sm rounded">
+                      Deactivate
+                    </button>
+                  </form>
+                @else
+                  <form method="post" action="{{ route('admin.reactivate', $admin) }}" class="inline-block ml-1"
+                        onsubmit="return confirm('Reactivate this admin account?');">
+                    @csrf
+                    <button type="submit" class="bg-sky-700 hover:bg-sky-800 text-white px-3 py-[6px] text-sm rounded">
+                      Reactivate
+                    </button>
+                  </form>
+                @endif
               @endif
             </td>
           </tr>
         @empty
           <tr>
-            <td colspan="6" class="py-6 text-center text-gray-500">No admins yet.</td>
+            <td colspan="7" class="py-6 text-center text-gray-500">No admins yet.</td>
           </tr>
         @endforelse
       </tbody>

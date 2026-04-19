@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Election;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class ElectionController extends Controller
 {
@@ -66,15 +68,7 @@ class ElectionController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:date',
-            'start_time' => 'required|date_format:H:i:s',
-            'end_time' => 'required|date_format:H:i:s',
-            // 'admin_id'    => 'required|string',
-            // 'password'    => 'required|string',
-        ]);
+        $data = $this->validatedElectionPayload($request, null);
 
         // assert_current_user_is_admin();
         // assert_admin_credentials($data['admin_id'], $data['password']);
@@ -96,15 +90,7 @@ class ElectionController extends Controller
 
     public function update(Request $request, Election $election)
     {
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:date',
-            'start_time' => 'required|date_format:H:i:s',
-            'end_time' => 'required|date_format:H:i:s',
-            // 'admin_id'    => 'required|string',
-            // 'password'    => 'required|string',
-        ]);
+        $data = $this->validatedElectionPayload($request, $election->id);
 
         // assert_current_user_is_admin();
         // assert_admin_credentials($data['admin_id'], $data['password']);
@@ -133,5 +119,111 @@ class ElectionController extends Controller
                 'success' => 'Election deleted.',
                 'buttonText' => 'Proceed',
             ]);
+    }
+
+    /**
+     * @return array{title: string, start_date: string, end_date: string, start_time: string, end_time: string}
+     */
+    private function validatedElectionPayload(Request $request, ?int $exceptElectionId): array
+    {
+        return Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_time' => 'required|date_format:H:i:s',
+            'end_time' => 'required|date_format:H:i:s',
+        ])->after(function ($validator) use ($exceptElectionId) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+            $d = $validator->getData();
+
+            $window = new Election([
+                'start_date' => $d['start_date'],
+                'end_date' => $d['end_date'],
+                'start_time' => $d['start_time'],
+                'end_time' => $d['end_time'],
+            ]);
+
+            $startAt = Election::parseScheduleStart($window);
+            $endAt = Election::parseScheduleEnd($window);
+
+            if (! $startAt || ! $endAt || $endAt->lte($startAt)) {
+                $validator->errors()->add(
+                    'end_time',
+                    __('The voting end must be after the start.'),
+                );
+
+                return;
+            }
+
+            if ($this->electionTitleIsDuplicate((string) $d['title'], $exceptElectionId)) {
+                $validator->errors()->add(
+                    'election_duplicate',
+                    __('An election with this title already exists for an upcoming or in-progress election.'),
+                );
+
+                return;
+            }
+
+            if ($this->electionScheduleOverlaps($startAt, $endAt, $exceptElectionId)) {
+                $validator->errors()->add(
+                    'election_duplicate',
+                    __('This schedule matches or overlaps another election that is still upcoming or in progress. Use a non-overlapping window.'),
+                );
+            }
+        })->validate();
+    }
+
+    /**
+     * Encrypted title is not suitable for DB-level unique checks; compare decrypted values.
+     */
+    private function electionTitleIsDuplicate(string $title, ?int $ignoreElectionId): bool
+    {
+        $norm = mb_strtolower(trim($title));
+
+        return Election::query()
+            ->get()
+            ->filter(function (Election $e) use ($ignoreElectionId) {
+                if ((string) $e->status === 'completed') {
+                    return false;
+                }
+                if ($ignoreElectionId !== null && (int) $e->id === $ignoreElectionId) {
+                    return false;
+                }
+
+                return true;
+            })
+            ->contains(fn (Election $e) => mb_strtolower(trim((string) $e->title)) === $norm);
+    }
+
+    /**
+     * Half-open window matches the ballot: active when start <= now < end.
+     */
+    private function electionScheduleOverlaps(
+        Carbon $startAt,
+        Carbon $endAt,
+        ?int $ignoreElectionId,
+    ): bool {
+        foreach (Election::query()->get() as $existing) {
+            if ((string) $existing->status === 'completed') {
+                continue;
+            }
+            if ($ignoreElectionId !== null && (int) $existing->id === $ignoreElectionId) {
+                continue;
+            }
+
+            $exStart = Election::parseScheduleStart($existing);
+            $exEnd = Election::parseScheduleEnd($existing);
+            if (! $exStart || ! $exEnd || $exEnd->lte($exStart)) {
+                continue;
+            }
+
+            if ($startAt->lt($exEnd) && $exStart->lt($endAt)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

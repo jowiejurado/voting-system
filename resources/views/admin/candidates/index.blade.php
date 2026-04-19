@@ -6,12 +6,18 @@
 <div class="flex flex-col gap-6 px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Candidates</h1>
-    <div class="flex items-center justify-between">
-			<button type="button" id="btn-add"
-							class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
-							data-modal-open="#candidate-modal">
-				Add Candidate
-			</button>
+    <div class="flex flex-col gap-y-2 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex flex-col gap-y-2">
+				<button type="button" id="btn-add"
+								class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white w-fit"
+								@if($lockedUpcomingElection)
+									data-modal-open="#candidate-modal"
+								@else
+									data-modal-open="#add-candidate-unavailable-modal"
+								@endif>
+					Add Candidate
+				</button>
+			</div>
 
 			<form id="search-form" method="GET" action="{{ route('admin.candidates.index') }}"
 						class="flex items-center gap-x-2">
@@ -105,6 +111,21 @@
 	</div>
 </div>
 
+<x-ui.modal id="add-candidate-unavailable-modal"
+            title="Cannot add candidate"
+            size="max-w-md"
+            :form="null">
+	<p class="text-sm text-gray-700">
+		You can add candidates once an election is within 10 days. Check back when the next election is closer.
+	</p>
+	@error('upcoming_election')
+		<p class="text-red-600 text-sm mt-4" role="alert">{{ $message }}</p>
+	@enderror
+	<div class="flex justify-end mt-6">
+		<button type="button" class="px-4 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-900" data-modal-close>OK</button>
+	</div>
+</x-ui.modal>
+
 <x-ui.modal id="candidate-modal"
             title="Add Candidate"
             :form="['id'=>'candidate-form','action'=>route('admin.candidates.store'),'method'=>'POST','submitText'=>'Submit']">
@@ -131,10 +152,10 @@
 
 	<div>
     <label class="block text-sm mb-1">Position</label>
-   	<select name="position" id="position" class="border-2 border-gray-400 py-2 px-2 w-full">
-			<option value="" disabled selected>Select position</option>
+   	<select name="position" id="position" required class="border-2 border-gray-400 py-2 px-2 w-full">
+			<option value="" disabled @selected(old('position') === null || old('position') === '')>Select position</option>
 			@foreach($positions as $id => $position)
-				<option value="{{ old('position') ?? $id }}">{{ $position }}</option>
+				<option value="{{ $id }}" @selected((string) old('position') === (string) $id)>{{ $position }}</option>
 			@endforeach
 		</select>
     @error('position') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
@@ -142,10 +163,10 @@
 
 	<div>
     <label class="block text-sm mb-1">Organization</label>
-   	<select name="organization" id="organization" class="border-2 border-gray-400 py-2 px-2 w-full">
-			<option value="" disabled selected>Select organization</option>
+   	<select name="organization" id="organization" required class="border-2 border-gray-400 py-2 px-2 w-full">
+			<option value="" disabled @selected(old('organization') === null || old('organization') === '')>Select organization</option>
 			@foreach($organizations as $id => $organization)
-				<option value="{{ $id }}">{{ $organization }}</option>
+				<option value="{{ $id }}" @selected((string) old('organization') === (string) $id)>{{ $organization }}</option>
 			@endforeach
 		</select>
     @error('organization') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
@@ -166,6 +187,10 @@
            value="{{ old('last_name') }}" placeholder="e.g., Dela Cruz" required>
     @error('last_name') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
+
+	@error('candidate_duplicate')
+		<p class="text-red-600 text-sm mt-2" role="alert">{{ $message }}</p>
+	@enderror
 
   {{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
@@ -276,6 +301,9 @@
 
   document.addEventListener('click', (e) => {
     if (e.target.closest('#btn-add')) {
+      if (!electionLocked) {
+        return;
+      }
       candidateForm.action = @json(route('admin.candidates.store'));
       methodField.value   = 'POST';
       modalTitleEl.textContent = 'Add Candidate';
@@ -317,8 +345,29 @@
     }
   });
 
-  @if($errors->any())
-    window.Modal.openById('candidate-modal');
+  @if($openCandidateModalAfterError || $openUnavailableModalAfterError)
+  (function () {
+    var modalId = @json($openCandidateModalAfterError ? 'candidate-modal' : 'add-candidate-unavailable-modal');
+    function openWhenReady() {
+      var n = 0;
+      function tick() {
+        if (typeof window.Modal !== 'undefined' && typeof window.Modal.openById === 'function') {
+          window.Modal.openById(modalId);
+          return;
+        }
+        n++;
+        if (n < 120) {
+          requestAnimationFrame(tick);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(tick); });
+      } else {
+        requestAnimationFrame(tick);
+      }
+    }
+    openWhenReady();
+  })();
   @endif
 
   (function () {

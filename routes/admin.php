@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => redirect()->route('auth.login'))->name('admin.home');
 
 // Admin user management (route names: admin.index, admin.store, etc.)
+Route::post('admin/{admin}/deactivate', [AdminController::class, 'deactivate'])->name('admin.deactivate');
+Route::post('admin/{admin}/reactivate', [AdminController::class, 'reactivate'])->name('admin.reactivate');
 Route::apiResource('admin', AdminController::class)->except('show');
 
 Route::name('admin.')->group(function () {

@@ -121,6 +121,10 @@
             :form="['id'=>'election-form','action'=>route('admin.elections.store'),'method'=>'POST','submitText'=>'Submit']">
   <input type="hidden" name="_method" id="method-field" value="POST" data-clear-on-close>
 
+  <p class="text-xs text-gray-600 mb-3">
+    Each upcoming or in-progress election needs a distinct title and its own voting window. Schedules cannot match or overlap in time (Asia/Manila).
+  </p>
+
   <div>
     <label class="block text-sm mb-1">Title</label>
     <input type="text" name="title" id="title"
@@ -166,6 +170,10 @@
            value="{{ old('end_time') }}" required>
     @error('end_time') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
+
+  @error('election_duplicate')
+    <p class="text-red-600 text-sm mt-2" role="alert">{{ $message }}</p>
+  @enderror
 
   {{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
@@ -293,7 +301,28 @@
   });
 
   @if($errors->any())
-    window.Modal.openById('election-modal');
+  (function () {
+    var modalId = 'election-modal';
+    function openWhenReady() {
+      var n = 0;
+      function tick() {
+        if (typeof window.Modal !== 'undefined' && typeof window.Modal.openById === 'function') {
+          window.Modal.openById(modalId);
+          return;
+        }
+        n++;
+        if (n < 120) {
+          requestAnimationFrame(tick);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(tick); });
+      } else {
+        requestAnimationFrame(tick);
+      }
+    }
+    openWhenReady();
+  })();
   @endif
 
   (function () {

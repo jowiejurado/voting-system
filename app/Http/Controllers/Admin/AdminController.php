@@ -25,14 +25,12 @@ class AdminController extends Controller
 		// `first_name` / `last_name` are encrypted at rest; filter decrypted values when searching.
 		if ($q === '') {
 			$admins = User::query()
-				->where('is_active', true)
 				->whereIn('type', ['admin', 'system-admin'])
 				->latest()
 				->paginate($perPage)
 				->withQueryString();
 		} else {
 			$filtered = User::query()
-				->where('is_active', true)
 				->whereIn('type', ['admin', 'system-admin'])
 				->latest()
 				->get()
@@ -105,6 +103,7 @@ class AdminController extends Controller
 				'type'           => 'system-admin',
 				'password'       => Hash::make('P@ssw0rd!@#'),
 				'face_descriptor' => null,
+				'is_active'      => true,
 			]);
 
 			return redirect()->route('admin.index')
@@ -158,6 +157,7 @@ class AdminController extends Controller
 			'type'           => 'admin',
 			'password'       => Hash::make('P@ssw0rd!@#'),
 			'face_descriptor' => $descriptor,
+			'is_active'      => true,
 		]);
 
 		return redirect()->route('admin.index')
@@ -248,6 +248,60 @@ class AdminController extends Controller
 			->with([
 				'success' => 'Admin successfully updated',
 				'buttonText' => 'Proceed'
+			]);
+	}
+
+	public function deactivate(User $admin)
+	{
+		if (! Auth::check() || Auth::user()->type !== 'system-admin') {
+			return redirect()->route('admin.index')
+				->with([
+					'error' => 'Unauthorized',
+					'buttonText' => 'Proceed',
+				]);
+		}
+
+		if (! in_array($admin->type, ['admin', 'system-admin'], true)) {
+			abort(404);
+		}
+
+		if ($admin->id === Auth::id()) {
+			return redirect()->route('admin.index')
+				->with([
+					'error' => 'You cannot deactivate your own account.',
+					'buttonText' => 'Proceed',
+				]);
+		}
+
+		$admin->forceFill(['is_active' => false])->save();
+
+		return redirect()->route('admin.index')
+			->with([
+				'success' => 'Admin account has been deactivated.',
+				'buttonText' => 'Proceed',
+			]);
+	}
+
+	public function reactivate(User $admin)
+	{
+		if (! Auth::check() || Auth::user()->type !== 'system-admin') {
+			return redirect()->route('admin.index')
+				->with([
+					'error' => 'Unauthorized',
+					'buttonText' => 'Proceed',
+				]);
+		}
+
+		if (! in_array($admin->type, ['admin', 'system-admin'], true)) {
+			abort(404);
+		}
+
+		$admin->forceFill(['is_active' => true])->save();
+
+		return redirect()->route('admin.index')
+			->with([
+				'success' => 'Admin account has been reactivated.',
+				'buttonText' => 'Proceed',
 			]);
 	}
 }

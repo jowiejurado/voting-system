@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Voter;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmitBallotRequest;
+use App\Mail\VoteReceiptMail;
 use App\Models\Candidate;
 use App\Models\Election;
 use App\Models\Position;
 use App\Models\User;
 use App\Models\Vote;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class BallotController extends Controller
 {
@@ -135,8 +139,81 @@ class BallotController extends Controller
         $userModel = User::find($user->id);
         $userModel->forceFill(['has_voted' => true])->save();
 
+        $receiptRows = $this->buildVoteReceiptRows($election, (int) $user->id, $positionsPayload);
+        $submittedAtDisplay = Carbon::now(Election::SCHEDULE_TIMEZONE)->format('F j, Y g:i A T');
+
+        if ($userModel->email) {
+            try {
+                Mail::to($userModel->email)->send(new VoteReceiptMail(
+                    $userModel,
+                    $election,
+                    $receiptRows,
+                    $submittedAtDisplay,
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('Vote receipt email failed', [
+                    'user_id' => $userModel->id,
+                    'election_id' => $election->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
         return redirect()
             ->route('voter.ballot')
             ->with(['success' => 'Your vote has been submitted. Thank you!']);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $positionsPayload
+     * @return list<array{position: string, choices: list<string>}>
+     */
+    private function buildVoteReceiptRows(Election $election, int $userId, array $positionsPayload): array
+    {
+        $votes = Vote::query()
+            ->where('election_id', $election->id)
+            ->where('user_id', $userId)
+            ->with(['position', 'candidate.organization'])
+            ->get()
+            ->groupBy(fn (Vote $vote) => (int) $vote->position_id);
+
+        $rows = [];
+        foreach ($positionsPayload as $positionId => $candidateIds) {
+            $positionId = (int) $positionId;
+            $position = Position::find($positionId);
+            if (! $position) {
+                continue;
+            }
+
+            $group = $votes->get($positionId, collect());
+            if ($group->isEmpty()) {
+                $rows[] = [
+                    'position' => (string) $position->name,
+                    'choices' => [],
+                ];
+
+                continue;
+            }
+
+            $choices = $group->map(function (Vote $vote) {
+                $c = $vote->candidate;
+                if (! $c) {
+                    return null;
+                }
+                $line = trim($c->last_name.', '.$c->first_name);
+                if ($c->relationLoaded('organization') && $c->organization?->name) {
+                    $line .= ' ('.$c->organization->name.')';
+                }
+
+                return $line;
+            })->filter()->unique()->values()->all();
+
+            $rows[] = [
+                'position' => (string) $position->name,
+                'choices' => $choices,
+            ];
+        }
+
+        return $rows;
     }
 }
