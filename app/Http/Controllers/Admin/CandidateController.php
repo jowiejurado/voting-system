@@ -164,9 +164,6 @@ class CandidateController extends Controller
             }
         })->validate();
 
-        // assert_current_user_is_admin();
-        // assert_admin_credentials($data['admin_id'], $data['password']);
-
         Candidate::create([
             'election_id' => $data['election'],
             'position_id' => $data['position'],
@@ -213,9 +210,6 @@ class CandidateController extends Controller
                 );
             }
         })->validate();
-
-        // assert_current_user_is_admin();
-        // assert_admin_credentials($data['admin_id'], $data['password']);
 
         $candidate->update([
             'election_id' => $data['election'],

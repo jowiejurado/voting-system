@@ -77,7 +77,7 @@
             </td>
             <td class="py-3 text-center">
               @if($admin->type === 'system-admin')
-                {{-- Edit System Admin (no face / OTP / sec question) --}}
+                {{-- Edit System Admin (security questions; no face) --}}
                 <button type="button"
                         class="btn-edit-system bg-green-600 text-white px-3 py-[6px] text-sm rounded"
                         data-modal-open="#system-admin-modal"
@@ -85,11 +85,12 @@
                         data-first_name="{{ $admin->first_name }}"
                         data-last_name="{{ $admin->last_name }}"
                         data-phone_number="{{ $admin->phone_number }}"
-                        data-email="{{ $admin->email }}">
+                        data-email="{{ $admin->email }}"
+                        data-security-questions="{{ e(json_encode($admin->securityQuestions->map(fn ($s) => $s->question)->values()->all())) }}">
                   Edit
                 </button>
               @else
-                {{-- Edit Admin (with face capture & admin-auth) --}}
+                {{-- Edit Admin (with face capture) --}}
                 <button type="button"
                         class="btn-edit-admin bg-green-600 text-white px-3 py-[6px] text-sm rounded"
                         data-modal-open="#admin-modal"
@@ -97,7 +98,8 @@
                         data-first_name="{{ $admin->first_name }}"
                         data-last_name="{{ $admin->last_name }}"
                         data-phone_number="{{ $admin->phone_number }}"
-                        data-email="{{ $admin->email }}">
+                        data-email="{{ $admin->email }}"
+                        data-security-questions="{{ e(json_encode($admin->securityQuestions->map(fn ($s) => $s->question)->values()->all())) }}">
                   Edit
                 </button>
               @endif
@@ -159,13 +161,14 @@
   </div>
 </div>
 
-{{-- ========== ADMIN MODAL (WITH FACE & AUTH) ========== --}}
+{{-- ========== ADMIN MODAL (WITH FACE & SECURITY QUESTIONS) ========== --}}
 <x-ui.modal id="admin-modal"
             title="Add Admin"
             :form="['id'=>'admin-form','action'=>route('admin.store'),'method'=>'POST','submitText'=>'Submit']">
   <input type="hidden" name="_method" id="method-field" value="POST" data-clear-on-close>
    <input type="hidden" name="user_type" value="admin" data-clear-on-close>
 
+  <div class="max-h-[75vh] md:max-h-[70vh] overflow-y-auto pr-2 space-y-4">
   <div>
     <label class="block text-sm mb-1" for="first_name">First Name</label>
     <input type="text" name="first_name" id="first_name"
@@ -228,17 +231,70 @@
   </div>
   {{-- ===== /Face registration ===== --}}
 
-  {{-- OTP / security question block (ADMIN ONLY) --}}
-  <x-ui.admin-auth class="pt-2" />
+    <div class="mt-1 border-2 border-gray-300 rounded-xl p-3">
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-semibold">Security Questions</label>
+        <span class="text-xs text-gray-500">Min 1 • Max 3 • Answers ≥ 2 chars</span>
+      </div>
+
+      @php($adminSq = old('user_type') === 'admin' ? old('security_questions') : null)
+      <div id="admin-security-qa-list" class="flex flex-col gap-3">
+        @if(is_array($adminSq) && count($adminSq))
+          @foreach($adminSq as $i => $qa)
+            <div class="admin-qa-row flex gap-2">
+              <input name="security_questions[{{ $i }}][question]" type="text" required maxlength="255"
+                     value="{{ $qa['question'] ?? '' }}" placeholder="e.g., What is your favorite color?"
+                     class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none">
+              <input name="security_questions[{{ $i }}][answer]" type="text" required minlength="2" maxlength="255"
+                     value="{{ $qa['answer'] ?? '' }}" placeholder="Answer (min 2 chars)"
+                     class="w-56 border-2 border-gray-400 py-2 px-3 outline-none">
+              <button type="button" class="admin-btn-remove-qa text-sm px-3 rounded-2xl bg-amber-600 text-white">Remove</button>
+            </div>
+          @endforeach
+        @else
+          <div class="admin-qa-row flex gap-2">
+            <input name="security_questions[0][question]" type="text" required maxlength="255"
+                   placeholder="e.g., What is your favorite color?"
+                   class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none">
+            <input name="security_questions[0][answer]" type="text" required minlength="2" maxlength="255"
+                   placeholder="Answer (min 2 chars)"
+                   class="w-56 border-2 border-gray-400 py-2 px-3 outline-none">
+            <button type="button" class="admin-btn-remove-qa text-sm px-2 rounded-md bg-red-600 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          </div>
+        @endif
+      </div>
+
+      <div class="flex items-center gap-3 mt-3">
+        <button id="admin-btn-add-security-qa" type="button" class="px-4 py-2 rounded-md bg-black text-white">Add Question</button>
+        <span class="text-xs text-gray-600">Keep answers memorable but not guessable.</span>
+      </div>
+
+      @error('security_questions')
+        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+      @enderror
+      @error('security_questions.*.question')
+        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+      @enderror
+      @error('security_questions.*.answer')
+        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+      @enderror
+    </div>
+  </div>
+  {{-- /scrollable admin modal body --}}
 </x-ui.modal>
 
-{{-- ========== SYSTEM ADMIN MODAL (NO FACE / OTP / SEQ Q) ========== --}}
+{{-- ========== SYSTEM ADMIN MODAL (SECURITY QUESTIONS, NO FACE) ========== --}}
 <x-ui.modal id="system-admin-modal"
             title="Add System Admin"
             :form="['id'=>'system-admin-form','action'=>route('admin.store'),'method'=>'POST','submitText'=>'Submit']">
   <input type="hidden" name="_method" id="system-method-field" value="POST" data-clear-on-close>
   <input type="hidden" name="user_type" value="system-admin" data-clear-on-close>
 
+  <div class="max-h-[75vh] md:max-h-[70vh] overflow-y-auto pr-2 space-y-4">
   <div>
     <label class="block text-sm mb-1" for="system_first_name">First Name</label>
     <input type="text" name="first_name" id="system_first_name"
@@ -271,8 +327,60 @@
     @error('email') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
   </div>
 
-  {{-- NOTE: No face capture, no OTP, no security questions here --}}
-	<x-ui.admin-auth class="pt-2" />
+    <div class="mt-1 border-2 border-gray-300 rounded-xl p-3">
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-semibold">Security Questions</label>
+        <span class="text-xs text-gray-500">Min 1 • Max 3 • Answers ≥ 2 chars</span>
+      </div>
+
+      @php($systemSq = old('user_type') === 'system-admin' ? old('security_questions') : null)
+      <div id="system-security-qa-list" class="flex flex-col gap-3">
+        @if(is_array($systemSq) && count($systemSq))
+          @foreach($systemSq as $i => $qa)
+            <div class="system-qa-row flex gap-2">
+              <input name="security_questions[{{ $i }}][question]" type="text" required maxlength="255"
+                     value="{{ $qa['question'] ?? '' }}" placeholder="e.g., What is your favorite color?"
+                     class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none">
+              <input name="security_questions[{{ $i }}][answer]" type="text" required minlength="2" maxlength="255"
+                     value="{{ $qa['answer'] ?? '' }}" placeholder="Answer (min 2 chars)"
+                     class="w-56 border-2 border-gray-400 py-2 px-3 outline-none">
+              <button type="button" class="system-btn-remove-qa text-sm px-3 rounded-2xl bg-amber-600 text-white">Remove</button>
+            </div>
+          @endforeach
+        @else
+          <div class="system-qa-row flex gap-2">
+            <input name="security_questions[0][question]" type="text" required maxlength="255"
+                   placeholder="e.g., What is your favorite color?"
+                   class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none">
+            <input name="security_questions[0][answer]" type="text" required minlength="2" maxlength="255"
+                   placeholder="Answer (min 2 chars)"
+                   class="w-56 border-2 border-gray-400 py-2 px-3 outline-none">
+            <button type="button" class="system-btn-remove-qa text-sm px-2 rounded-md bg-red-600 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          </div>
+        @endif
+      </div>
+
+      <div class="flex items-center gap-3 mt-3">
+        <button id="system-btn-add-security-qa" type="button" class="px-4 py-2 rounded-md bg-black text-white">Add Question</button>
+        <span class="text-xs text-gray-600">Keep answers memorable but not guessable.</span>
+      </div>
+
+      @error('security_questions')
+        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+      @enderror
+      @error('security_questions.*.question')
+        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+      @enderror
+      @error('security_questions.*.answer')
+        <div class="text-red-600 text-sm mt-2">{{ $message }}</div>
+      @enderror
+    </div>
+  </div>
+  {{-- /scrollable system admin modal body --}}
 </x-ui.modal>
 
 <meta name="admin-update-url" content="{{ route('admin.update', ':id') }}">
@@ -425,6 +533,210 @@
       return;
     }
   });
+
+  (function () {
+    const list = document.getElementById('admin-security-qa-list');
+    const addBtn = document.getElementById('admin-btn-add-security-qa');
+    const MAX = 3, MIN = 1;
+
+    function countRows() {
+      return list ? list.querySelectorAll('.admin-qa-row').length : 0;
+    }
+
+    function updateButtons() {
+      if (!addBtn || !list) return;
+      addBtn.disabled = countRows() >= MAX;
+      list.querySelectorAll('.admin-btn-remove-qa').forEach((btn) => {
+        btn.disabled = countRows() <= MIN;
+      });
+    }
+
+    function rowTemplate(i) {
+      return `
+      <div class="admin-qa-row flex gap-2">
+        <input name="security_questions[${i}][question]" type="text" required maxlength="255"
+               placeholder="e.g., What is your favorite color?"
+               class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none" />
+        <input name="security_questions[${i}][answer]" type="text" required minlength="2" maxlength="255"
+               placeholder="Answer (min 2 chars)"
+               class="w-56 border-2 border-gray-400 py-2 px-3 outline-none" />
+        <button type="button" class="admin-btn-remove-qa text-sm px-2 rounded-md bg-red-600 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+        </button>
+      </div>`;
+    }
+
+    function reindexRows() {
+      if (!list) return;
+      Array.from(list.querySelectorAll('.admin-qa-row')).forEach((row, idx) => {
+        row.querySelectorAll('input').forEach((inp) => {
+          inp.name = inp.name.replace(/security_questions\[\d+]/, `security_questions[${idx}]`);
+        });
+      });
+    }
+
+    function setRowsFromQuestions(questionList) {
+      if (!list) return;
+      const qs = Array.isArray(questionList) && questionList.length ? questionList : [''];
+      list.innerHTML = '';
+      qs.forEach((qText, i) => {
+        list.insertAdjacentHTML('beforeend', rowTemplate(i));
+        const row = list.lastElementChild;
+        const qInp = row.querySelector('input[name$="[question]"]');
+        const aInp = row.querySelector('input[name$="[answer]"]');
+        if (qInp) qInp.value = qText || '';
+        if (aInp) aInp.value = '';
+      });
+      reindexRows();
+      attachHandlers();
+      updateButtons();
+    }
+
+    addBtn?.addEventListener('click', () => {
+      const n = countRows();
+      if (n >= MAX || !list) return;
+      list.insertAdjacentHTML('beforeend', rowTemplate(n));
+      attachHandlers();
+      updateButtons();
+    });
+
+    function attachHandlers() {
+      if (!list) return;
+      list.querySelectorAll('.admin-btn-remove-qa').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          if (countRows() <= MIN) return;
+          btn.closest('.admin-qa-row')?.remove();
+          reindexRows();
+          updateButtons();
+        });
+      });
+    }
+
+    attachHandlers();
+    updateButtons();
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-add')) {
+        setRowsFromQuestions([]);
+        return;
+      }
+      const editAdminBtn = e.target.closest('.btn-edit-admin');
+      if (editAdminBtn && editAdminBtn.dataset.securityQuestions) {
+        try {
+          const parsed = JSON.parse(editAdminBtn.dataset.securityQuestions);
+          setRowsFromQuestions(parsed);
+        } catch (_) {
+          setRowsFromQuestions([]);
+        }
+      }
+    });
+  })();
+
+  (function () {
+    const list = document.getElementById('system-security-qa-list');
+    const addBtn = document.getElementById('system-btn-add-security-qa');
+    const MAX = 3, MIN = 1;
+
+    function countRows() {
+      return list ? list.querySelectorAll('.system-qa-row').length : 0;
+    }
+
+    function updateButtons() {
+      if (!addBtn || !list) return;
+      addBtn.disabled = countRows() >= MAX;
+      list.querySelectorAll('.system-btn-remove-qa').forEach((btn) => {
+        btn.disabled = countRows() <= MIN;
+      });
+    }
+
+    function rowTemplate(i) {
+      return `
+      <div class="system-qa-row flex gap-2">
+        <input name="security_questions[${i}][question]" type="text" required maxlength="255"
+               placeholder="e.g., What is your favorite color?"
+               class="flex-1 border-2 border-gray-400 py-2 px-3 outline-none" />
+        <input name="security_questions[${i}][answer]" type="text" required minlength="2" maxlength="255"
+               placeholder="Answer (min 2 chars)"
+               class="w-56 border-2 border-gray-400 py-2 px-3 outline-none" />
+        <button type="button" class="system-btn-remove-qa text-sm px-2 rounded-md bg-red-600 text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+          </svg>
+        </button>
+      </div>`;
+    }
+
+    function reindexRows() {
+      if (!list) return;
+      Array.from(list.querySelectorAll('.system-qa-row')).forEach((row, idx) => {
+        row.querySelectorAll('input').forEach((inp) => {
+          inp.name = inp.name.replace(/security_questions\[\d+]/, `security_questions[${idx}]`);
+        });
+      });
+    }
+
+    function setRowsFromQuestions(questionList) {
+      if (!list) return;
+      const qs = Array.isArray(questionList) && questionList.length ? questionList : [''];
+      list.innerHTML = '';
+      qs.forEach((qText, i) => {
+        list.insertAdjacentHTML('beforeend', rowTemplate(i));
+        const row = list.lastElementChild;
+        const qInp = row.querySelector('input[name$="[question]"]');
+        const aInp = row.querySelector('input[name$="[answer]"]');
+        if (qInp) qInp.value = qText || '';
+        if (aInp) aInp.value = '';
+      });
+      reindexRows();
+      attachHandlers();
+      updateButtons();
+    }
+
+    addBtn?.addEventListener('click', () => {
+      const n = countRows();
+      if (n >= MAX || !list) return;
+      list.insertAdjacentHTML('beforeend', rowTemplate(n));
+      attachHandlers();
+      updateButtons();
+    });
+
+    function attachHandlers() {
+      if (!list) return;
+      list.querySelectorAll('.system-btn-remove-qa').forEach((btn) => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          if (countRows() <= MIN) return;
+          btn.closest('.system-qa-row')?.remove();
+          reindexRows();
+          updateButtons();
+        });
+      });
+    }
+
+    attachHandlers();
+    updateButtons();
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('#btn-add-system')) {
+        setRowsFromQuestions([]);
+        return;
+      }
+      const editSystemBtn = e.target.closest('.btn-edit-system');
+      if (editSystemBtn && editSystemBtn.dataset.securityQuestions) {
+        try {
+          const parsed = JSON.parse(editSystemBtn.dataset.securityQuestions);
+          setRowsFromQuestions(parsed);
+        } catch (_) {
+          setRowsFromQuestions([]);
+        }
+      }
+    });
+  })();
 
 	@if($errors->any())
 		@if(old('user_type') === 'system-admin')

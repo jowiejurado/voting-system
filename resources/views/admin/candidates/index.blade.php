@@ -191,8 +191,6 @@
 	@error('candidate_duplicate')
 		<p class="text-red-600 text-sm mt-2" role="alert">{{ $message }}</p>
 	@enderror
-
-  {{-- <x-ui.admin-auth class="pt-2" /> --}}
 </x-ui.modal>
 
 <x-ui.modal id="delete-confirm-modal"

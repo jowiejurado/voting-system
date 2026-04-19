@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserSecurityQuestion;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -26,12 +28,14 @@ class AdminController extends Controller
 		if ($q === '') {
 			$admins = User::query()
 				->whereIn('type', ['admin', 'system-admin'])
+				->with('securityQuestions')
 				->latest()
 				->paginate($perPage)
 				->withQueryString();
 		} else {
 			$filtered = User::query()
 				->whereIn('type', ['admin', 'system-admin'])
+				->with('securityQuestions')
 				->latest()
 				->get()
 				->filter(function (User $user) use ($q) {
@@ -89,22 +93,41 @@ class AdminController extends Controller
 				'last_name'    => 'required|string|max:255',
 				'phone_number' => 'required|string',
 				'email' 			 => 'required|string',
-				// optional, but safe to validate:
 				'user_type'    => 'required|in:system-admin',
+				'security_questions' => 'required|array|min:1|max:3',
+				'security_questions.*.question' => 'required|string|max:255',
+				'security_questions.*.answer' => 'required|string|min:2|max:255',
 			]);
 
-			User::create([
-				'last_name'      => $data['last_name'],
-				'first_name'     => $data['first_name'],
-				'phone_number'   => $data['phone_number'],
-				'email'   			 => $data['email'],
-				// use your existing helper for IDs
-				'admin_id'       => generate_system_admin_id(),
-				'type'           => 'system-admin',
-				'password'       => Hash::make('P@ssw0rd!@#'),
-				'face_descriptor' => null,
-				'is_active'      => true,
-			]);
+			DB::beginTransaction();
+			try {
+				$user = User::create([
+					'last_name'      => $data['last_name'],
+					'first_name'     => $data['first_name'],
+					'phone_number'   => $data['phone_number'],
+					'email'   			 => $data['email'],
+					'admin_id'       => generate_system_admin_id(),
+					'type'           => 'system-admin',
+					'password'       => Hash::make('P@ssw0rd!@#'),
+					'face_descriptor' => null,
+					'is_active'      => true,
+				]);
+
+				foreach ($data['security_questions'] as $qa) {
+					$q = trim($qa['question']);
+					$a = UserSecurityQuestion::normalizeAnswer($qa['answer']);
+					UserSecurityQuestion::create([
+						'user_id' => $user->id,
+						'question' => $q,
+						'answer_hash' => Hash::make($a),
+					]);
+				}
+
+				DB::commit();
+			} catch (\Throwable $e) {
+				DB::rollBack();
+				throw $e;
+			}
 
 			return redirect()->route('admin.index')
 				->with([
@@ -119,14 +142,12 @@ class AdminController extends Controller
 			'last_name'            => 'required|string|max:255',
 			'phone_number'         => 'required|string',
 			'email'         			 => 'required|string',
-			'admin_id'             => 'required|string',   // current system-admin credentials
-			'password'             => 'required|string',
 			'face_descriptor_json' => 'required|string',
 			'user_type'            => 'required|in:admin',
+			'security_questions' => 'required|array|min:1|max:3',
+			'security_questions.*.question' => 'required|string|max:255',
+			'security_questions.*.answer' => 'required|string|min:2|max:255',
 		]);
-
-		assert_current_user_is_admin();
-		assert_admin_credentials($data['admin_id'], $data['password']);
 
 		$descriptor = null;
 		if (!empty($data['face_descriptor_json'])) {
@@ -148,17 +169,35 @@ class AdminController extends Controller
 			return back()->withErrors(['face_descriptor_json' => 'Please capture a face.'])->withInput();
 		}
 
-		User::create([
-			'last_name'      => $data['last_name'],
-			'first_name'     => $data['first_name'],
-			'phone_number'   => $data['phone_number'],
-			'email'   			 => $data['email'],
-			'admin_id'       => generate_admin_id(),
-			'type'           => 'admin',
-			'password'       => Hash::make('P@ssw0rd!@#'),
-			'face_descriptor' => $descriptor,
-			'is_active'      => true,
-		]);
+		DB::beginTransaction();
+		try {
+			$user = User::create([
+				'last_name'      => $data['last_name'],
+				'first_name'     => $data['first_name'],
+				'phone_number'   => $data['phone_number'],
+				'email'   			 => $data['email'],
+				'admin_id'       => generate_admin_id(),
+				'type'           => 'admin',
+				'password'       => Hash::make('P@ssw0rd!@#'),
+				'face_descriptor' => $descriptor,
+				'is_active'      => true,
+			]);
+
+			foreach ($data['security_questions'] as $qa) {
+				$q = trim($qa['question']);
+				$a = UserSecurityQuestion::normalizeAnswer($qa['answer']);
+				UserSecurityQuestion::create([
+					'user_id' => $user->id,
+					'question' => $q,
+					'answer_hash' => Hash::make($a),
+				]);
+			}
+
+			DB::commit();
+		} catch (\Throwable $e) {
+			DB::rollBack();
+			throw $e;
+		}
 
 		return redirect()->route('admin.index')
 			->with([
@@ -184,14 +223,37 @@ class AdminController extends Controller
 				'last_name'  => 'required|string|max:255',
 				'phone_number' => 'required|string',
 				'email' => 'required|string',
+				'security_questions' => 'required|array|min:1|max:3',
+				'security_questions.*.question' => 'required|string|max:255',
+				'security_questions.*.answer' => 'required|string|min:2|max:255',
 			]);
 
-			$admin->update([
-				'last_name'  => $data['last_name'],
-				'first_name' => $data['first_name'],
-				'phone_number' => $data['phone_number'],
-				'email' => $data['email'],
-			]);
+			DB::beginTransaction();
+			try {
+				$admin->update([
+					'last_name'  => $data['last_name'],
+					'first_name' => $data['first_name'],
+					'phone_number' => $data['phone_number'],
+					'email' => $data['email'],
+				]);
+
+				$admin->securityQuestions()->delete();
+
+				foreach ($data['security_questions'] as $qa) {
+					$q = trim($qa['question']);
+					$a = UserSecurityQuestion::normalizeAnswer($qa['answer']);
+					UserSecurityQuestion::create([
+						'user_id' => $admin->id,
+						'question' => $q,
+						'answer_hash' => Hash::make($a),
+					]);
+				}
+
+				DB::commit();
+			} catch (\Throwable $e) {
+				DB::rollBack();
+				throw $e;
+			}
 
 			return redirect()->route('admin.index')
 				->with([
@@ -208,6 +270,9 @@ class AdminController extends Controller
 			'admin_id'             => 'required|string',
 			'password'             => 'required|string',
 			'face_descriptor_json' => 'nullable|string',
+			'security_questions' => 'required|array|min:1|max:3',
+			'security_questions.*.question' => 'required|string|max:255',
+			'security_questions.*.answer' => 'required|string|min:2|max:255',
 		]);
 
 		assert_current_user_is_admin();
@@ -236,13 +301,33 @@ class AdminController extends Controller
 			}
 		}
 
-		$admin->update([
-			'last_name'       => $data['last_name'],
-			'first_name'      => $data['first_name'],
-			'phone_number'    => $data['phone_number'],
-			'email'    				=> $data['email'],
-			'face_descriptor' => $descriptor,
-		]);
+		DB::beginTransaction();
+		try {
+			$admin->update([
+				'last_name'       => $data['last_name'],
+				'first_name'      => $data['first_name'],
+				'phone_number'    => $data['phone_number'],
+				'email'    				=> $data['email'],
+				'face_descriptor' => $descriptor,
+			]);
+
+			$admin->securityQuestions()->delete();
+
+			foreach ($data['security_questions'] as $qa) {
+				$q = trim($qa['question']);
+				$a = UserSecurityQuestion::normalizeAnswer($qa['answer']);
+				UserSecurityQuestion::create([
+					'user_id' => $admin->id,
+					'question' => $q,
+					'answer_hash' => Hash::make($a),
+				]);
+			}
+
+			DB::commit();
+		} catch (\Throwable $e) {
+			DB::rollBack();
+			throw $e;
+		}
 
 		return redirect()->route('admin.index')
 			->with([
