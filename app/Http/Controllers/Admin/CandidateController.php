@@ -8,6 +8,7 @@ use App\Models\Election;
 use App\Models\Organization;
 use App\Models\Position;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 
 class CandidateController extends Controller
@@ -15,6 +16,7 @@ class CandidateController extends Controller
     public function index(Request $request)
     {
         Election::syncComputedStatuses();
+        $this->deleteCandidatesForCompletedElections();
 
         $positions = Position::get()
             ->mapWithKeys(fn ($e) => [$e->id => $e->name]);
@@ -39,23 +41,51 @@ class CandidateController extends Controller
         $perPage = (int) $request->get('per_page', 10);
         $perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
-        $candidates = \App\Models\Candidate::query()
-            ->with(['position', 'organization'])
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('last_name', 'like', "%{$q}%")
-                        ->orWhere('first_name', 'like', "%{$q}%")
-                        ->orWhereHas('organization', function ($o) use ($q) {
-                            $o->where('name', 'like', "%{$q}%");
-                        })
-                        ->orWhereHas('position', function ($p) use ($q) {
-                            $p->where('name', 'like', "%{$q}%");
-                        });
-                });
-            })
-            ->latest()
-            ->paginate($perPage)
-            ->withQueryString();
+        // Candidate names plus related org/position/election titles are encrypted at rest.
+        if ($q === '') {
+            $candidates = Candidate::query()
+                ->with(['position', 'organization', 'election'])
+                ->latest()
+                ->paginate($perPage)
+                ->withQueryString();
+        } else {
+            $filtered = Candidate::query()
+                ->with(['position', 'organization', 'election'])
+                ->latest()
+                ->get()
+                ->filter(function (Candidate $candidate) use ($q) {
+                    if (mb_stripos((string) $candidate->first_name, $q) !== false) {
+                        return true;
+                    }
+                    if (mb_stripos((string) $candidate->last_name, $q) !== false) {
+                        return true;
+                    }
+                    if (mb_stripos(trim((string) $candidate->first_name . ' ' . (string) $candidate->last_name), $q) !== false) {
+                        return true;
+                    }
+                    if (mb_stripos((string) ($candidate->organization?->name ?? ''), $q) !== false) {
+                        return true;
+                    }
+                    if (mb_stripos((string) ($candidate->position?->name ?? ''), $q) !== false) {
+                        return true;
+                    }
+                    if (mb_stripos((string) ($candidate->election?->title ?? ''), $q) !== false) {
+                        return true;
+                    }
+
+                    return false;
+                })
+                ->values();
+
+            $page = max(1, (int) $request->get('page', 1));
+            $candidates = new LengthAwarePaginator(
+                $filtered->slice(($page - 1) * $perPage, $perPage)->values(),
+                $filtered->count(),
+                $perPage,
+                $page,
+                ['path' => $request->url(), 'query' => $request->query()]
+            );
+        }
 
         return view('admin.candidates.index', compact(
             'candidates',
@@ -133,6 +163,37 @@ class CandidateController extends Controller
                 'success' => 'Successfully Submitted',
                 'buttonText' => 'Proceed',
             ]);
+    }
+
+    public function destroy(Candidate $candidate)
+    {
+        $candidate->delete();
+
+        return redirect()->route('admin.candidates.index')
+            ->with([
+                'success' => 'Candidate deleted.',
+                'buttonText' => 'Proceed',
+            ]);
+    }
+
+    /**
+     * Candidates tied to elections whose status is completed (ended) are removed automatically.
+     * Vote rows cascade on candidate delete.
+     */
+    private function deleteCandidatesForCompletedElections(): void
+    {
+        $completedElectionIds = Election::query()
+            ->get()
+            ->filter(fn ($e) => (string) $e->status === 'completed')
+            ->pluck('id');
+
+        if ($completedElectionIds->isEmpty()) {
+            return;
+        }
+
+        Candidate::query()
+            ->whereIn('election_id', $completedElectionIds)
+            ->delete();
     }
 
     /**

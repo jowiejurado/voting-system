@@ -58,17 +58,25 @@
               {{ optional($election->created_at)->timezone('Asia/Manila')->format('F d, Y H:i') }}
             </td>
             <td class="py-3 text-center">
-              <button type="button"
-											class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
-											data-modal-open="#election-modal"
-											data-id="{{ $election->id }}"
-											data-title="{{ $election->title }}"
-											data-start_date="{{ \Carbon\Carbon::parse($election->start_date)->format('Y-m-d') }}"
-											data-end_date="{{ $election->end_date ? \Carbon\Carbon::parse($election->end_date)->format('Y-m-d') : '' }}"
-											data-start_time="{{ \Carbon\Carbon::parse($election->start_time)->format('H:i:s') }}"
-  										data-end_time="{{ \Carbon\Carbon::parse($election->end_time)->format('H:i:s') }}">
-								Edit
-							</button>
+              <div class="inline-flex flex-wrap items-center justify-center gap-2">
+                <button type="button"
+                        class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
+                        data-modal-open="#election-modal"
+                        data-id="{{ $election->id }}"
+                        data-title="{{ $election->title }}"
+                        data-start_date="{{ \Carbon\Carbon::parse($election->start_date)->format('Y-m-d') }}"
+                        data-end_date="{{ $election->end_date ? \Carbon\Carbon::parse($election->end_date)->format('Y-m-d') : '' }}"
+                        data-start_time="{{ \Carbon\Carbon::parse($election->start_time)->format('H:i:s') }}"
+                        data-end_time="{{ \Carbon\Carbon::parse($election->end_time)->format('H:i:s') }}">
+                  Edit
+                </button>
+                <button type="button"
+                        class="btn-delete bg-red-600 hover:bg-red-700 text-white px-3 py-[6px] text-sm rounded"
+                        data-delete-url="{{ route('admin.elections.destroy', $election) }}"
+                        data-delete-message="Delete this election ({{ $election->title }})? Related candidates and votes will be removed. This cannot be undone.">
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         @empty
@@ -160,6 +168,21 @@
   </div>
 
   {{-- <x-ui.admin-auth class="pt-2" /> --}}
+</x-ui.modal>
+
+<x-ui.modal id="delete-confirm-modal"
+            title="Confirm deletion"
+            size="max-w-md"
+            :form="null">
+  <p id="delete-confirm-message" class="text-sm text-gray-700"></p>
+  <form id="delete-confirm-form" method="POST" class="mt-6" action="#">
+    @csrf
+    @method('DELETE')
+    <div class="flex items-center justify-end gap-2">
+      <button type="button" class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300" data-modal-cancel>Cancel</button>
+      <button type="submit" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white">Delete</button>
+    </div>
+  </form>
 </x-ui.modal>
 
 <meta name="election-update-url" content="{{ route('admin.elections.update', ':id') }}">
@@ -272,6 +295,21 @@
   @if($errors->any())
     window.Modal.openById('election-modal');
   @endif
+
+  (function () {
+    const delForm = document.getElementById('delete-confirm-form');
+    const delMsg = document.getElementById('delete-confirm-message');
+    if (!delForm || !delMsg) return;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete');
+      if (!btn) return;
+      const url = btn.dataset.deleteUrl;
+      if (url) delForm.action = url;
+      delMsg.textContent = btn.dataset.deleteMessage || 'Are you sure you want to delete this record? This cannot be undone.';
+      window.Modal.openById('delete-confirm-modal');
+    });
+    delForm.addEventListener('submit', () => { showTableLoading(); });
+  })();
 </script>
 @endpush
 

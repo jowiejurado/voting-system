@@ -11,7 +11,7 @@ Route::get('/', fn () => redirect()->route('auth.login'))->name('voter.home');
 
 Route::name('voter.')->group(function () {
     Route::get('verify-method', [UnifiedAuthController::class, 'showVerifyMethod'])->name('verify.method');
-    Route::get('verify/begin/{method}', [UnifiedAuthController::class, 'beginVerification'])->where('method', 'otp|face')->name('verify.begin');
+    Route::get('verify/begin/{method}', [UnifiedAuthController::class, 'beginVerification'])->where('method', 'otp|face|security')->name('verify.begin');
 
     Route::get('otp', [UnifiedAuthController::class, 'showOtp'])->name('otp');
     Route::post('otp', [UnifiedAuthController::class, 'verifyOtp'])->name('otp.verify');

@@ -22,35 +22,36 @@
 					placeholder="Type keywords..."
 					class="border-2 border-gray-300 py-1 px-2 outline-none"
 					autofocus
+					autocomplete="off"
 				/>
 
-				<label for="sort" class="ml-4">Sort:</label>
+				<label for="filter" class="ml-4">Filter:</label>
 				<select
-					id="sort"
-					name="sort"
+					id="filter"
+					name="filter"
 					class="border-2 border-gray-300 py-1 px-2 outline-none"
 					onchange="document.getElementById('search-form').submit()"
 				>
-					<option value="" selected>
-						Select option
+					<option value="" {{ empty($filter ?? '') ? 'selected' : '' }}>
+						All
 					</option>
-					<option value="voted" {{ ($sort ?? 'undone') === 'voted' ? 'selected' : '' }}>
+					<option value="voted" {{ ($filter ?? '') === 'voted' ? 'selected' : '' }}>
 						Voted
 					</option>
-					<option value="undone" {{ ($sort ?? 'undone') === 'undone' ? 'selected' : '' }}>
+					<option value="undone" {{ ($filter ?? '') === 'undone' ? 'selected' : '' }}>
 						Undone
 					</option>
 				</select>
 
 				{{-- Keep per_page if you’re using it elsewhere --}}
-				<input type="hidden" name="per_page" value="{{ $perPage ?? 25 }}">
+				<input type="hidden" name="per_page" value="{{ $perPage ?? 9 }}">
 			</form>
 		</div>
   </div>
 
 	<div class="flex flex-wrap justify-evenly gap-x-8 gap-y-6 text-white">
 		@forelse($voters as $voter)
-			<div class="flex justify-between basis-[calc(33.333%-2rem)] bg-[#545454] rounded-4xl px-4 py-5 relative">
+			<div class="flex justify-between basis-[calc(33.333%-2rem)] rounded-4xl px-4 py-5 relative {{ $voter->has_voted ? 'bg-green-700' : 'bg-[#545454]' }}">
 				<div class="flex flex-col justify-center gap-y-4 basis-10/12">
 					<span class="text-2xl capitalize">{{ $voter->first_name }} {{ $voter->last_name }}</span>
 
@@ -123,3 +124,30 @@
 	@endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+	const form = document.getElementById('search-form');
+	const search = document.getElementById('search');
+	if (!form || !search) return;
+
+	let debounceTimer;
+	const delayMs = 250;
+
+	function submitSearch() {
+		clearTimeout(debounceTimer);
+		debounceTimer = setTimeout(function () {
+			if (typeof form.requestSubmit === 'function') {
+				form.requestSubmit();
+			} else {
+				form.submit();
+			}
+		}, delayMs);
+	}
+
+	search.addEventListener('input', submitSearch);
+	search.addEventListener('search', submitSearch);
+})();
+</script>
+@endpush

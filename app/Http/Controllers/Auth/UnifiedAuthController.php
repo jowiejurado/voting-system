@@ -59,6 +59,7 @@ class UnifiedAuthController extends Controller
 			'login_chose_otp',
 			'login_chose_face',
 			'login_otp_sent',
+			'login_otp_channel',
 			'login_face_attempts',
 			'login_otp_attempts',
 			'login_security_unlocked',
@@ -237,6 +238,7 @@ class UnifiedAuthController extends Controller
 			session([
 				'login_chose_otp' => true,
 				'login_otp_sent' => true,
+				'login_otp_channel' => $channel,
 			]);
 
 			return redirect()->route($loginPanel . '.otp')->with([
@@ -273,6 +275,14 @@ class UnifiedAuthController extends Controller
 
 		$p = $this->panel();
 
+		if ($p === 'voter') {
+			return view('admin.auth.verify-method', [
+				'verifyBeginRoute' => $p . '.verify.begin',
+				'hasRegisteredFace' => $user->hasRegisteredFace(),
+				'hasSecurityQuestions' => $user->securityQuestions()->exists(),
+			]);
+		}
+
 		if (! $user->hasRegisteredFace()) {
 			return redirect()->route($p . '.verify.begin', ['method' => 'otp']);
 		}
@@ -300,7 +310,11 @@ class UnifiedAuthController extends Controller
 		$p = $this->panel();
 
 		if ($method === 'otp') {
-			$request->session()->forget('login_chose_face');
+			$request->session()->forget([
+				'login_chose_face',
+				'login_security_unlocked',
+				'sq_question_id',
+			]);
 			session([
 				'login_chose_otp' => true,
 				'login_otp_sent' => false,
@@ -309,7 +323,10 @@ class UnifiedAuthController extends Controller
 				? $request->input('otp_channel')
 				: 'sms';
 			$this->otpService->sendOTP(Auth::user(), 'login', $channel);
-			session(['login_otp_sent' => true]);
+			session([
+				'login_otp_sent' => true,
+				'login_otp_channel' => $channel,
+			]);
 
 			return redirect()->route($p . '.otp')->with([
 				'success' => 'OTP has been sent',
@@ -322,10 +339,37 @@ class UnifiedAuthController extends Controller
 				return redirect()->route($p . '.verify.begin', ['method' => 'otp']);
 			}
 
-			$request->session()->forget(['login_chose_otp', 'login_otp_sent']);
+			$request->session()->forget(['login_chose_otp', 'login_otp_sent', 'login_otp_channel', 'login_security_unlocked', 'sq_question_id']);
 			session(['login_chose_face' => true]);
 
 			return redirect()->route($p . '.face');
+		}
+
+		if ($method === 'security') {
+			if ($p !== 'voter') {
+				abort(404);
+			}
+
+			$user = Auth::user();
+			if (! $user->securityQuestions()->exists()) {
+				return redirect()->route($p . '.verify.method')->with([
+					'error' => 'No security questions are set up for this account.',
+					'buttonText' => 'Proceed',
+				]);
+			}
+
+			$request->session()->forget([
+				'login_chose_otp',
+				'login_otp_sent',
+				'login_otp_channel',
+				'login_chose_face',
+				'login_face_attempts',
+				'login_otp_attempts',
+				'sq_question_id',
+			]);
+			session(['login_security_unlocked' => true]);
+
+			return redirect()->route($p . '.security.show');
 		}
 
 		abort(404);
@@ -351,23 +395,33 @@ class UnifiedAuthController extends Controller
 		if ($this->isSystemAdmin($user)) {
 			if (! session('login_otp_sent')) {
 				$this->otpService->sendOTP($user, 'login', 'sms');
-				session(['login_otp_sent' => true]);
+				session([
+					'login_otp_sent' => true,
+					'login_otp_channel' => 'sms',
+				]);
 			}
 		} elseif (! session('login_chose_otp')) {
 			return redirect()->route($p . '.verify.method');
 		} elseif (! session('login_otp_sent')) {
 			$this->otpService->sendOTP($user, 'login', 'sms');
-			session(['login_otp_sent' => true]);
+			session([
+				'login_otp_sent' => true,
+				'login_otp_channel' => 'sms',
+			]);
 		}
 
 		$phone = (string) $user->phone_number;
 		$maskLen = max(strlen($phone) - 7, 0);
 		$masked = Str::mask($phone, '*', 4, $maskLen);
+		$maskedEmail = $this->maskEmailForDisplay((string) $user->email);
+		$otpDeliveryChannel = session('login_otp_channel', 'sms') === 'email' ? 'email' : 'sms';
 
 		return view('admin.auth.otp', [
 			'otpVerifyRoute' => route($p . '.otp.verify'),
 			'sendOtpRoute' => route($p . '.send-otp'),
 			'maskedPhone' => $masked,
+			'maskedEmail' => $maskedEmail,
+			'otpDeliveryChannel' => $otpDeliveryChannel,
 		]);
 	}
 
@@ -393,7 +447,7 @@ class UnifiedAuthController extends Controller
 		}
 
 		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
-			$request->session()->forget(['login_otp_attempts', 'login_chose_otp', 'login_chose_face']);
+			$request->session()->forget(['login_otp_attempts', 'login_chose_otp', 'login_chose_face', 'login_otp_channel']);
 			session(['full_login_complete' => true, 'login_otp_sent' => false]);
 
 			return redirect()->to($this->landingUrl())->with([
@@ -406,6 +460,7 @@ class UnifiedAuthController extends Controller
 		session(['login_otp_attempts' => $attempts]);
 
 		if ($attempts >= LoginVerificationLimits::OTP_ATTEMPTS) {
+			$request->session()->forget('login_otp_channel');
 			session([
 				'login_security_unlocked' => true,
 				'login_chose_otp' => false,
@@ -502,6 +557,7 @@ class UnifiedAuthController extends Controller
 				'login_chose_otp',
 				'login_chose_face',
 				'login_otp_sent',
+				'login_otp_channel',
 				'login_face_attempts',
 				'login_otp_attempts',
 				'login_security_unlocked',
@@ -543,6 +599,23 @@ class UnifiedAuthController extends Controller
 		$request->session()->regenerateToken();
 
 		return redirect()->route('auth.login');
+	}
+
+	protected function maskEmailForDisplay(string $email): string
+	{
+		$email = trim($email);
+		if ($email === '') {
+			return '';
+		}
+
+		if (! str_contains($email, '@')) {
+			return Str::mask($email, '*', 1, max(strlen($email) - 2, 0));
+		}
+
+		[$local, $domain] = explode('@', $email, 2);
+		$first = Str::substr($local, 0, 1) ?: '*';
+
+		return $first . '***@' . $domain;
 	}
 
 	protected function landingUrl(): string

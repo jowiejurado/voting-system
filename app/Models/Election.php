@@ -152,6 +152,7 @@ class Election extends Model
         $now = now('Asia/Manila');
 
         foreach (static::query()->get() as $item) {
+            $previousStatus = (string) $item->status;
             $newStatus = $item->status;
             $today = $now->toDateString();
             $startDate = Carbon::parse((string) $item->start_date, 'Asia/Manila')->toDateString();
@@ -183,6 +184,10 @@ class Election extends Model
             if ($newStatus !== $item->status) {
                 $item->status = $newStatus;
                 $item->save();
+
+                if ($newStatus === 'completed' && $previousStatus !== 'completed') {
+                    User::query()->where('type', 'voter')->update(['has_voted' => false]);
+                }
             }
         }
     }

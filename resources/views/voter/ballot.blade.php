@@ -292,8 +292,7 @@
     txt.className = 'text-center';
     txt.innerHTML = `
       <p class="font-black text-xl">${escapeHtml(cand.name)}</p>
-      <p class="font-bold text-md">${escapeHtml(pos.name)}</p>
-      <p class="font-medium text-xs">${escapeHtml(cand.org || '')}</p>
+      <p class="font-bold text-md">${escapeHtml(cand.org || '')}</p>
     `;
     wrap.appendChild(txt);
 

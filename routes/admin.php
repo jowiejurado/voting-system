@@ -46,7 +46,7 @@ Route::name('admin.')->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::apiResource('voters', AdminVoterController::class);
         Route::apiResource('positions', AdminPositionController::class);
-        Route::apiResource('organizations', AdminOrganizationController::class)->only(['index', 'store', 'update']);
+        Route::apiResource('organizations', AdminOrganizationController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::apiResource('candidates', AdminCandidateController::class);
         Route::apiResource('elections', AdminElectionController::class);
         Route::get('archives', [AdminArchiveController::class, 'index'])->name('archives.index');

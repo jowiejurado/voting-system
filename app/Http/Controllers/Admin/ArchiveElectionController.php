@@ -50,7 +50,7 @@ class ArchiveElectionController extends Controller
 					if (! $hasEnded) {
 						return false;
 					}
-					if ($q !== '' && stripos((string) $item->title, $q) === false) {
+					if ($q !== '' && mb_stripos((string) $item->title, $q) === false) {
 						return false;
 					}
 					return true;
@@ -107,7 +107,7 @@ class ArchiveElectionController extends Controller
 				if (! $isArchived) return false;
 
 				// search
-				if ($q !== '' && stripos($title, $q) === false) return false;
+				if ($q !== '' && mb_stripos($title, $q) === false) return false;
 
 				// start/end date
 				if (!empty($startDate) && $sd !== \Illuminate\Support\Carbon::parse($startDate, 'Asia/Manila')->toDateString()) return false;

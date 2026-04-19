@@ -38,6 +38,10 @@ class VoterAuthController extends Controller
 		$context = $request->input('context', 'change-password');
 		$this->otpService->sendOTP($user, $context, $channel);
 
+		if ($context === 'login') {
+			session(['login_otp_channel' => $channel]);
+		}
+
 		if ($request->expectsJson()) {
 			return response()->json([
 				'success' => true,

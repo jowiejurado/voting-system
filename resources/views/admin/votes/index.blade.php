@@ -6,6 +6,7 @@
 <div class="flex flex-col gap-6 px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Votes</h1>
+    @if ($activeElection ?? null)
     <div class="flex items-center justify-end">
 			<form id="search-form" method="GET" action="{{ route('admin.votes.index') }}"
 						class="flex items-center gap-x-2">
@@ -17,6 +18,11 @@
 							autofocus />
 			</form>
 		</div>
+    @else
+    <p class="text-sm text-gray-700 max-w-2xl">
+      The vote list is only available while an election is open for voting. After voting closes, this list is cleared until the next active election.
+    </p>
+    @endif
   </div>
 
 	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
@@ -56,6 +62,7 @@
 		</div>
   </div>
 
+	@if ($activeElection ?? null)
 	<div class="flex items-center justify-end gap-x-5 px-4 py-3">
 		<form id="per-page-form" method="GET" action="{{ route('admin.votes.index') }}"
 					class="flex gap-x-2 items-center">
@@ -78,6 +85,7 @@
 			{{ $votes->onEachSide(1)->links('vendor.pagination.always') }}
 		</div>
 	</div>
+	@endif
 </div>
 @endsection
 

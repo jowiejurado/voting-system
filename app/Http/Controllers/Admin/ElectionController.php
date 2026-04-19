@@ -23,7 +23,7 @@ class ElectionController extends Controller
         $filtered = $all->filter(function ($item) use ($q) {
             if ($q !== '') {
                 $title = (string) $item->title;
-                if (stripos($title, $q) === false) {
+                if (mb_stripos($title, $q) === false) {
                     return false;
                 }
             }
@@ -120,6 +120,17 @@ class ElectionController extends Controller
         return redirect()->route('admin.elections.index')
             ->with([
                 'success' => 'Successfully Submitted',
+                'buttonText' => 'Proceed',
+            ]);
+    }
+
+    public function destroy(Election $election)
+    {
+        $election->delete();
+
+        return redirect()->route('admin.elections.index')
+            ->with([
+                'success' => 'Election deleted.',
                 'buttonText' => 'Proceed',
             ]);
     }

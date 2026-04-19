@@ -31,6 +31,10 @@ class AdminAuthController extends Controller
 		$context = $request->input('context', 'change-password');
 		$this->otpService->sendOTP($user, $context, $channel);
 
+		if ($context === 'login') {
+			session(['login_otp_channel' => $channel]);
+		}
+
 		return back()->with([
 			'success' => 'OTP has been sent',
 			'buttonText' => 'Proceed',

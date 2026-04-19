@@ -44,17 +44,26 @@
             <td class="py-3 px-6">{{ $voter->member_id }}</td>
             <td class="py-3 text-center">{{ $voter->organization_name }}</td>
             <td class="py-3 text-center">
-              <button type="button"
-                      class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
-                      data-modal-open="#voter-modal"
-                      data-id="{{ $voter->id }}"
-                      data-first_name="{{ $voter->first_name }}"
-                      data-last_name="{{ $voter->last_name }}"
-                      data-member_id="{{ $voter->member_id }}"
-                      data-phone_number="{{ $voter->phone_number }}"
-                      data-organization_name="{{ $voter->organization_name }}">
-                Edit
-              </button>
+              <div class="inline-flex flex-wrap items-center justify-center gap-2">
+                <button type="button"
+                        class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
+                        data-modal-open="#voter-modal"
+                        data-id="{{ $voter->id }}"
+                        data-first_name="{{ $voter->first_name }}"
+                        data-last_name="{{ $voter->last_name }}"
+                        data-member_id="{{ $voter->member_id }}"
+                        data-phone_number="{{ $voter->phone_number }}"
+                        data-email="{{ $voter->email }}"
+                        data-organization_name="{{ $voter->organization_name }}">
+                  Edit
+                </button>
+                <button type="button"
+                        class="btn-delete bg-red-600 hover:bg-red-700 text-white px-3 py-[6px] text-sm rounded"
+                        data-delete-url="{{ route('admin.voters.destroy', $voter) }}"
+                        data-delete-message="Delete voter {{ $voter->first_name }} {{ $voter->last_name }} ({{ $voter->member_id }})? This cannot be undone.">
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         @empty
@@ -145,9 +154,18 @@
 
     <div>
       <label class="block text-sm mb-1">Organization Name</label>
-      <input type="text" name="organization_name" id="organization_name"
-             class="w-full border-2 border-gray-400 py-2 px-3 outline-none"
-             value="{{ old('organization_name') }}" placeholder="e.g., IT, Marketing" required>
+      <select name="organization_name" id="organization_name"
+              class="w-full border-2 border-gray-400 py-2 px-3 outline-none bg-white" required>
+        <option value="" @selected(old('organization_name') === null || old('organization_name') === ''))>
+          Select organization…
+        </option>
+        @foreach($organizations as $org)
+          <option value="{{ $org->name }}" @selected(old('organization_name') === $org->name)>{{ $org->name }}</option>
+        @endforeach
+      </select>
+      @if($organizations->isEmpty())
+        <p class="text-amber-700 text-xs mt-1">No organizations yet. Add one under Organization management first.</p>
+      @endif
       @error('organization_name')
         <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
       @enderror
@@ -244,6 +262,21 @@
   {{-- /SCROLLABLE BODY --}}
 
 	{{-- <x-ui.admin-auth class="pt-2" /> --}}
+</x-ui.modal>
+
+<x-ui.modal id="delete-confirm-modal"
+            title="Confirm deletion"
+            size="max-w-md"
+            :form="null">
+  <p id="delete-confirm-message" class="text-sm text-gray-700"></p>
+  <form id="delete-confirm-form" method="POST" class="mt-6" action="#">
+    @csrf
+    @method('DELETE')
+    <div class="flex items-center justify-end gap-2">
+      <button type="button" class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300" data-modal-cancel>Cancel</button>
+      <button type="submit" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white">Delete</button>
+    </div>
+  </form>
 </x-ui.modal>
 
 <meta name="voter-store-url" content="{{ route('admin.voters.store') }}">
@@ -421,6 +454,25 @@
   const memberIdInp     = document.getElementById('member_id');
   const phoneNumberInp  = document.getElementById('phone_number');
 
+  function stripTemporaryOrgOptions(){
+    if (!orgNameInp || orgNameInp.tagName !== 'SELECT') return;
+    orgNameInp.querySelectorAll('option[data-legacy-org="1"]').forEach((o) => o.remove());
+  }
+
+  function setOrganizationSelectValue(val){
+    if (!orgNameInp || orgNameInp.tagName !== 'SELECT') return;
+    const v = val || '';
+    stripTemporaryOrgOptions();
+    if (v && ![...orgNameInp.options].some((o) => o.value === v)) {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v + ' (not in current list)';
+      opt.setAttribute('data-legacy-org', '1');
+      orgNameInp.appendChild(opt);
+    }
+    orgNameInp.value = v || '';
+  }
+
   document.addEventListener('click', (e)=>{
     if(e.target.closest('#btn-add')){
       voterForm.action = @json(route('admin.voters.store'));
@@ -430,7 +482,7 @@
       if(firstNameInp)   firstNameInp.value   = '';
       if(lastNameInp)    lastNameInp.value    = '';
 			if(emailInp) emailInp.value    = '';
-      if(orgNameInp)     orgNameInp.value     = '';
+      setOrganizationSelectValue('');
       if(memberIdInp)    memberIdInp.value    = '';
       if(phoneNumberInp) phoneNumberInp.value = '';
       voterModal?.setAttribute('data-mode', 'add');
@@ -449,7 +501,7 @@
       if(firstNameInp)   firstNameInp.value   = editBtn.dataset.first_name || '';
       if(lastNameInp)    lastNameInp.value    = editBtn.dataset.last_name  || '';
 			if(emailInp)    emailInp.value    = editBtn.dataset.email  || '';
-      if(orgNameInp)     orgNameInp.value     = editBtn.dataset.organization_name || '';
+      setOrganizationSelectValue(editBtn.dataset.organization_name || '');
       if(memberIdInp)    memberIdInp.value    = editBtn.dataset.member_id  || '';
       if(phoneNumberInp) phoneNumberInp.value = editBtn.dataset.phone_number || '';
 
@@ -532,6 +584,21 @@
 
     attachHandlers();
     updateButtons();
+  })();
+
+  (function () {
+    const delForm = document.getElementById('delete-confirm-form');
+    const delMsg = document.getElementById('delete-confirm-message');
+    if (!delForm || !delMsg) return;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete');
+      if (!btn) return;
+      const url = btn.dataset.deleteUrl;
+      if (url) delForm.action = url;
+      delMsg.textContent = btn.dataset.deleteMessage || 'Are you sure you want to delete this record? This cannot be undone.';
+      window.Modal.openById('delete-confirm-modal');
+    });
+    delForm.addEventListener('submit', () => { showTableLoading(); });
   })();
 </script>
 @endpush

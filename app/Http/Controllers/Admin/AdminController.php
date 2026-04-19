@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -21,19 +22,47 @@ class AdminController extends Controller
 		$perPage = (int) $request->get('per_page', 10);
 		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
-		$admins = User::query()
-			->where('is_active', true)
-			->whereIn('type', ['admin', 'system-admin'])
-			->when($q !== '', function ($query) use ($q) {
-				$query->where(function ($sub) use ($q) {
-					$sub->where('first_name', 'like', "%{$q}%")
-						->orWhere('last_name', 'like', "%{$q}%")
-						->orWhere('admin_id', 'like', "%{$q}%");
-				});
-			})
-			->latest()
-			->paginate($perPage)
-			->withQueryString();
+		// `first_name` / `last_name` are encrypted at rest; filter decrypted values when searching.
+		if ($q === '') {
+			$admins = User::query()
+				->where('is_active', true)
+				->whereIn('type', ['admin', 'system-admin'])
+				->latest()
+				->paginate($perPage)
+				->withQueryString();
+		} else {
+			$filtered = User::query()
+				->where('is_active', true)
+				->whereIn('type', ['admin', 'system-admin'])
+				->latest()
+				->get()
+				->filter(function (User $user) use ($q) {
+					if (mb_stripos((string) $user->first_name, $q) !== false) {
+						return true;
+					}
+					if (mb_stripos((string) $user->last_name, $q) !== false) {
+						return true;
+					}
+					if (mb_stripos(trim((string) $user->first_name . ' ' . (string) $user->last_name), $q) !== false) {
+						return true;
+					}
+					if (mb_stripos((string) $user->admin_id, $q) !== false) {
+						return true;
+					}
+
+					return false;
+				})
+				->values();
+
+			$page = max(1, (int) $request->get('page', 1));
+			$admins = new LengthAwarePaginator(
+				$filtered->slice(($page - 1) * $perPage, $perPage)->values(),
+				$filtered->count(),
+				$perPage,
+				$page,
+				['path' => $request->url(), 'query' => $request->query()]
+			);
+		}
 
 		return view('admin.index', compact('admins', 'q', 'perPage'));
 	}

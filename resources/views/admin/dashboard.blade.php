@@ -12,7 +12,7 @@
   <div>
     {{-- Summary tiles --}}
     <div class="flex items-center justify-around border-b-2 border-b-black py-6">
-      <div class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/positions" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['positions'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">No. of Positions</div>
@@ -20,9 +20,9 @@
         <div class="max-w-[70px] h-auto">
           <img src={{ asset('icons/positions.png') }} alt="icon" width="70" height="70" />
         </div>
-      </div>
+      </a>
 
-      <div class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/candidates" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['candidates'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">No. of Candidates</div>
@@ -30,9 +30,9 @@
         <div class="max-w-[70px] h-auto">
           <img src={{ asset('icons/candidates.png') }} alt="icon" width="70" height="70" />
         </div>
-      </div>
+      </a>
 
-      <div class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/voters" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['voters'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">Total Voters</div>
@@ -40,17 +40,17 @@
         <div class="max-w-[70px] h-auto">
           <img src={{ asset('icons/voters.png') }} alt="icon" width="70" height="70" />
         </div>
-      </div>
+      </a>
 
-      <div class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/voter-status" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['voted'] ?? 0 }}</div>
-          <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">Voters Voted</div>
+          <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">Voted</div>
         </div>
         <div class="max-w-[70px] h-auto">
           <img src={{ asset('icons/voted.png') }} alt="icon" width="70" height="70" />
         </div>
-      </div>
+      </a>
     </div>
 
     {{-- Vote tally --}}
@@ -58,7 +58,7 @@
 
     @if(!$currentElection)
       <p class="flex justify-center items-center px-11 mt-2 text-sm text-gray-700 min-h-[55vh] text-center font-extrabold">
-        There is no current or upcoming election, so no tally is available.
+        Voting is not open right now, so vote tallies are not shown. They appear again while an election is actively accepting votes.
       </p>
     @endif
 

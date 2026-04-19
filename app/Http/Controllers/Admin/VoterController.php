@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Position;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\UserSecurityQuestion;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class VoterController extends Controller
 {
@@ -18,29 +20,68 @@ class VoterController extends Controller
 		$perPage = (int) $request->get('per_page', 10);
 		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
-		$voters = \App\Models\User::query()
-			->where('type', 'voter')
-			->when($q !== '', function ($query) use ($q) {
-				$query->where(function ($sub) use ($q) {
-					$sub->where('first_name', 'like', "%{$q}%");
-					$sub->orWhere('last_name', 'like', "%{$q}%");
-					$sub->orWhere('member_id', 'like', "%{$q}%");
-					$sub->orWhere('organization_name', 'like', "%{$q}%");
-				});
-			})
-			->latest()
-			->paginate($perPage)
-			->withQueryString();
+		// Several voter fields are encrypted at rest; filter decrypted values when searching.
+		if ($q === '') {
+			$voters = User::query()
+				->where('type', 'voter')
+				->latest()
+				->paginate($perPage)
+				->withQueryString();
+		} else {
+			$filtered = User::query()
+				->where('type', 'voter')
+				->latest()
+				->get()
+				->filter(function (User $voter) use ($q) {
+					if (mb_stripos((string) $voter->first_name, $q) !== false) {
+						return true;
+					}
+					if (mb_stripos((string) $voter->last_name, $q) !== false) {
+						return true;
+					}
+					if (mb_stripos(trim((string) $voter->first_name . ' ' . (string) $voter->last_name), $q) !== false) {
+						return true;
+					}
+					if (mb_stripos((string) $voter->member_id, $q) !== false) {
+						return true;
+					}
+					if (mb_stripos((string) $voter->organization_name, $q) !== false) {
+						return true;
+					}
 
-		return view('admin.voters.index', compact('voters', 'q', 'perPage'));
+					return false;
+				})
+				->values();
+
+			$page = max(1, (int) $request->get('page', 1));
+			$voters = new LengthAwarePaginator(
+				$filtered->slice(($page - 1) * $perPage, $perPage)->values(),
+				$filtered->count(),
+				$perPage,
+				$page,
+				['path' => $request->url(), 'query' => $request->query()]
+			);
+		}
+
+		$organizations = Organization::query()->orderBy('id')->get();
+
+		return view('admin.voters.index', compact('voters', 'q', 'perPage', 'organizations'));
 	}
 
 	public function store(Request $request)
 	{
+		$organizationNames = Organization::query()
+			->orderBy('id')
+			->get()
+			->map(fn (Organization $o) => (string) $o->name)
+			->unique()
+			->values()
+			->all();
+
 		$data = $request->validate([
 			'first_name'            							=> 'required|string|max:255',
 			'last_name'             							=> 'required|string|max:255',
-			'organization_name'     							=> 'required|string|max:255',
+			'organization_name'     							=> ['required', 'string', 'max:255', Rule::in($organizationNames)],
 			'phone_number'          							=> 'required|string',
 			'email'          											=> 'required|string',
 			// 'admin_id'              							=> 'required|string',
@@ -107,10 +148,23 @@ class VoterController extends Controller
 
 	public function update(Request $request, User $voter)
 	{
+		$organizationNames = Organization::query()
+			->orderBy('id')
+			->get()
+			->map(fn (Organization $o) => (string) $o->name)
+			->unique()
+			->values()
+			->all();
+
+		$currentOrg = (string) $voter->organization_name;
+		if ($currentOrg !== '' && ! in_array($currentOrg, $organizationNames, true)) {
+			$organizationNames[] = $currentOrg;
+		}
+
 		$data = $request->validate([
 			'first_name'            => 'required|string|max:255',
 			'last_name'             => 'required|string|max:255',
-			'organization_name'     => 'required|string|max:255',
+			'organization_name'     => ['required', 'string', 'max:255', Rule::in($organizationNames)],
 			'phone_number'          => 'required|string',
 			'email'     			     	=> 'required|string',
 			'member_id'             => 'required|string',
@@ -178,6 +232,18 @@ class VoterController extends Controller
 		return redirect()->route('admin.voters.index')->with([
 			'success' => 'Successfully Updated',
 			'buttonText' => 'Proceed'
+		]);
+	}
+
+	public function destroy(User $voter)
+	{
+		abort_unless($voter->type === 'voter', 404);
+
+		$voter->delete();
+
+		return redirect()->route('admin.voters.index')->with([
+			'success' => 'Voter deleted.',
+			'buttonText' => 'Proceed',
 		]);
 	}
 }

@@ -10,31 +10,22 @@ use App\Models\User;
 use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
 	public function index()
 	{
-		$today  = Carbon::today();
-		$cutoff = $today->copy()->addDays(5); // upcoming within next 5 days
+		Election::syncComputedStatuses();
 
-		/**
-		 * Pick the election whose date is:
-		 *  - today (current), or
-		 *  - within the next 5 days (upcoming)
-		 *
-		 * We completely ignore elections with date < today,
-		 * even if is_active = 1.
-		 */
-		$currentElection = Election::whereDate('start_date', '>=', $today)
-			->whereDate('start_date', '<=', $cutoff)
-			->orderBy('start_date')          // then the earliest by date
-			->first();
+		$now = Election::nowForSchedule();
 
-		// Base stats: voters are global; others are election-specific
+		// Tallies and vote stats only while the ballot window is open (same as BallotController).
+		$currentElection = Election::findActiveForBallot($now);
+
+		// Positions card: total configured positions (Manage → Positions). Candidates,
+		// voted, and charts stay scoped to the resolved election.
 		$stats = [
-			'positions'  => 0,
+			'positions'  => Position::query()->count(),
 			'candidates' => 0,
 			'voters'     => User::where('type', 'voter')->count(),
 			'voted'      => 0,
@@ -52,15 +43,13 @@ class DashboardController extends Controller
 				}])
 				->get();
 
-			// Stats for this election
-			$stats['positions'] = $positions->count();
-
 			$stats['candidates'] = Candidate::where('election_id', $currentElection->id)
 				->count();
 
-			$stats['voted'] = Vote::where('election_id', $currentElection->id)
-				->distinct('user_id')
-				->count('user_id');
+			$stats['voted'] = (int) Vote::query()
+				->where('election_id', $currentElection->id)
+				->selectRaw('count(distinct user_id) as aggregate')
+				->value('aggregate');
 
 			// Votes per candidate for this election
 			$votesByCandidate = Vote::select('candidate_id', DB::raw('COUNT(*) as votes'))
@@ -87,8 +76,6 @@ class DashboardController extends Controller
 			}
 		}
 
-		// If there is no election in [today, today+5],
-		// positions/candidates/voted remain 0 and charts is empty.
 		return view('admin.dashboard', [
 			'stats'           => $stats,
 			'charts'          => $charts,

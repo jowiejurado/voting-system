@@ -40,14 +40,22 @@
             <td class="py-3 px-6">{{ $position->name }}</td>
             <td class="py-3 text-center">{{ $position->maximum_votes }}</td>
             <td class="py-3 text-center">
-              <button type="button"
-											class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
-											data-modal-open="#position-modal"
-											data-id="{{ $position->id }}"
-											data-name="{{ $position->name }}"
-											data-maximum_votes="{{ $position->maximum_votes }}">
-								Edit
-							</button>
+              <div class="inline-flex flex-wrap items-center justify-center gap-2">
+                <button type="button"
+                        class="btn-edit bg-green-600 text-white px-3 py-[6px] text-sm rounded"
+                        data-modal-open="#position-modal"
+                        data-id="{{ $position->id }}"
+                        data-name="{{ $position->name }}"
+                        data-maximum_votes="{{ $position->maximum_votes }}">
+                  Edit
+                </button>
+                <button type="button"
+                        class="btn-delete bg-red-600 hover:bg-red-700 text-white px-3 py-[6px] text-sm rounded"
+                        data-delete-url="{{ route('admin.positions.destroy', $position) }}"
+                        data-delete-message="Delete this position ({{ $position->name }})? Related candidates will be removed. This cannot be undone.">
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         @empty
@@ -109,6 +117,21 @@
   </div>
 
   {{-- <x-ui.admin-auth class="pt-2" /> --}}
+</x-ui.modal>
+
+<x-ui.modal id="delete-confirm-modal"
+            title="Confirm deletion"
+            size="max-w-md"
+            :form="null">
+  <p id="delete-confirm-message" class="text-sm text-gray-700"></p>
+  <form id="delete-confirm-form" method="POST" class="mt-6" action="#">
+    @csrf
+    @method('DELETE')
+    <div class="flex items-center justify-end gap-2">
+      <button type="button" class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300" data-modal-cancel>Cancel</button>
+      <button type="submit" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white">Delete</button>
+    </div>
+  </form>
 </x-ui.modal>
 
 <meta name="position-update-url" content="{{ route('admin.positions.update', ':id') }}">
@@ -211,6 +234,21 @@
   @if($errors->any())
     window.Modal.openById('position-modal');
   @endif
+
+  (function () {
+    const delForm = document.getElementById('delete-confirm-form');
+    const delMsg = document.getElementById('delete-confirm-message');
+    if (!delForm || !delMsg) return;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete');
+      if (!btn) return;
+      const url = btn.dataset.deleteUrl;
+      if (url) delForm.action = url;
+      delMsg.textContent = btn.dataset.deleteMessage || 'Are you sure you want to delete this record? This cannot be undone.';
+      window.Modal.openById('delete-confirm-modal');
+    });
+    delForm.addEventListener('submit', () => { showTableLoading(); });
+  })();
 </script>
 @endpush
 

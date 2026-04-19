@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Position;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PositionController extends Controller
 {
@@ -14,16 +15,41 @@ class PositionController extends Controller
 		$perPage = (int) $request->get('per_page', 10);
 		$perPage = $perPage > 0 && $perPage <= 100 ? $perPage : 10;
 
-		$positions = \App\Models\Position::query()
-			->when($q !== '', function ($query) use ($q) {
-				$query->where(function ($sub) use ($q) {
-					$sub->where('name', 'like', "%{$q}%");
-					if (is_numeric($q)) $sub->orWhere('maximum_votes', (int) $q);
-				});
-			})
-			->latest()
-			->paginate($perPage)
-			->withQueryString();
+		if ($q === '') {
+			$positions = Position::query()
+				->latest()
+				->paginate($perPage)
+				->withQueryString();
+		} else {
+			$votesMatch = is_numeric($q) ? (int) $q : null;
+
+			$filtered = Position::query()
+				->latest()
+				->get()
+				->filter(function (Position $position) use ($q, $votesMatch) {
+					if (mb_stripos((string) $position->name, $q) !== false) {
+						return true;
+					}
+					if ($votesMatch !== null && (int) $position->maximum_votes === $votesMatch) {
+						return true;
+					}
+
+					return false;
+				})
+				->values();
+
+			$page = max(1, (int) $request->get('page', 1));
+			$total = $filtered->count();
+			$slice = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+
+			$positions = new LengthAwarePaginator(
+				$slice,
+				$total,
+				$perPage,
+				$page,
+				['path' => $request->url(), 'query' => $request->query()]
+			);
+		}
 
 		return view('admin.positions.index', compact('positions', 'q', 'perPage'));
 	}
@@ -73,6 +99,17 @@ class PositionController extends Controller
 			->with([
 				'success' => 'Successfully Submitted',
 				'buttonText' => 'Proceed'
+			]);
+	}
+
+	public function destroy(Position $position)
+	{
+		$position->delete();
+
+		return redirect()->route('admin.positions.index')
+			->with([
+				'success' => 'Position deleted.',
+				'buttonText' => 'Proceed',
 			]);
 	}
 }
