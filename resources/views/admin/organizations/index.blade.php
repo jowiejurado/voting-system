@@ -3,10 +3,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex flex-col gap-6 px-10 pt-5">
+<div class="flex flex-col gap-6 px-3 sm:px-6 lg:px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Organizations</h1>
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 			<button type="button" id="btn-add"
 							class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
 							data-modal-open="#organization-modal">
@@ -25,8 +25,8 @@
 		</div>
   </div>
 
-	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
-		<table class="table-fixed w-full" id="organizations-table">
+	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-x-auto">
+		<table class="table-fixed w-full min-w-[640px] text-sm sm:text-base" id="organizations-table">
       <thead>
         <tr class="border-b-2 border-gray-400">
           <th class="py-3 px-6 text-left">Organization</th>
@@ -68,7 +68,7 @@
 		</div>
   </div>
 
-	<div class="flex items-center justify-end gap-x-5 px-4 py-3">
+	<div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-3 sm:gap-x-5 px-4 py-3">
 		<form id="per-page-form" method="GET" action="{{ route('admin.organizations.index') }}"
 					class="flex gap-x-2 items-center">
 			<label class="text-sm text-gray-600">Items per page:</label>

@@ -3,7 +3,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex flex-col gap-6 px-10 pt-5">
+<div class="flex flex-col gap-6 px-3 sm:px-6 lg:px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Candidates</h1>
     <div class="flex flex-col gap-y-2 sm:flex-row sm:items-center sm:justify-between">
@@ -31,26 +31,26 @@
 		</div>
   </div>
 
-	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
-		<table class="table-fixed w-full" id="candidates-table">
+	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-x-auto">
+		<table class="table-fixed w-full min-w-[720px] text-sm sm:text-base" id="candidates-table">
       <thead>
         <tr class="border-b-2 border-gray-400">
-					<th class="py-3 px-6 text-center">Election</th>
-          <th class="py-3 px-6 text-center">Position</th>
-          <th class="py-3 text-center">Firstname</th>
-					<th class="py-3 text-center">Lastname</th>
-					<th class="py-3 text-center">Organization</th>
-          <th class="w-56 py-3 text-center">Tools</th>
+					<th class="py-3 px-2 sm:px-6 text-center">Election</th>
+          <th class="py-3 px-2 sm:px-6 text-center">Position</th>
+          <th class="py-3 px-1 sm:px-3 text-center">Firstname</th>
+					<th class="py-3 px-1 sm:px-3 text-center">Lastname</th>
+					<th class="py-3 px-1 sm:px-3 text-center">Organization</th>
+          <th class="w-48 sm:w-56 py-3 text-center">Tools</th>
         </tr>
       </thead>
       <tbody class="text-center">
         @forelse($candidates as $candidate)
           <tr class="border-b-2 border-gray-400 last:border-b-0">
-						<td class="py-3 px-6">{{ $candidate->election->title ?? '' }}</td>
-            <td class="py-3 px-6">{{ $candidate->position->name ?? '' }}</td>
-						<td class="py-3 px-6">{{ $candidate->first_name }}</td>
-						<td class="py-3 px-6">{{ $candidate->last_name }}</td>
-            <td class="py-3 text-center">{{ $candidate->organization?->name ?? '' }}</td>
+						<td class="py-3 px-2 sm:px-6">{{ $candidate->election->title ?? '' }}</td>
+            <td class="py-3 px-2 sm:px-6">{{ $candidate->position->name ?? '' }}</td>
+						<td class="py-3 px-2 sm:px-6">{{ $candidate->first_name }}</td>
+						<td class="py-3 px-2 sm:px-6">{{ $candidate->last_name }}</td>
+            <td class="py-3 px-1 sm:px-3 text-center">{{ $candidate->organization?->name ?? '' }}</td>
             <td class="py-3 text-center">
               <div class="inline-flex flex-wrap items-center justify-center gap-2">
                 <button type="button"
@@ -87,7 +87,7 @@
 		</div>
   </div>
 
-	<div class="flex items-center justify-end gap-x-5 px-4 py-3">
+	<div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-3 sm:gap-x-5 px-4 py-3">
 		<form id="per-page-form" method="GET" action="{{ route('admin.candidates.index') }}"
 					class="flex gap-x-2 items-center">
 			<label class="text-sm text-gray-600">Items per page:</label>

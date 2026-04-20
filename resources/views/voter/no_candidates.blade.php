@@ -1,7 +1,7 @@
 @extends('layouts.voter-app')
 
 @section('content')
-  <div class="flex items-center justify-center h-[calc(100vh-4rem)] overflow-hidden px-4">
+  <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] py-8 overflow-x-hidden overflow-y-auto px-4">
     <div class="text-center max-w-md">
       {{-- Illustration --}}
       <div class="mx-auto mb-6 w-40 h-40 rounded-full bg-amber-50 flex items-center justify-center shadow-sm">

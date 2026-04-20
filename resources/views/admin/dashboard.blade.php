@@ -11,8 +11,8 @@
 
   <div>
     {{-- Summary tiles --}}
-    <div class="flex items-center justify-around border-b-2 border-b-black py-6">
-      <a href="/admin/positions" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 border-b-2 border-b-black py-4 sm:py-6 px-3 sm:px-4">
+      <a href="/admin/positions" class="flex justify-between gap-4 sm:gap-9 bg-[#545454] px-4 py-5 sm:py-6 rounded-4xl min-w-0">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['positions'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">No. of Positions</div>
@@ -22,7 +22,7 @@
         </div>
       </a>
 
-      <a href="/admin/candidates" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/candidates" class="flex justify-between gap-4 sm:gap-9 bg-[#545454] px-4 py-5 sm:py-6 rounded-4xl min-w-0">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['candidates'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">No. of Candidates</div>
@@ -32,7 +32,7 @@
         </div>
       </a>
 
-      <a href="/admin/voters" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/voters" class="flex justify-between gap-4 sm:gap-9 bg-[#545454] px-4 py-5 sm:py-6 rounded-4xl min-w-0">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['voters'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">Total Voters</div>
@@ -42,7 +42,7 @@
         </div>
       </a>
 
-      <a href="/admin/voter-status" class="flex justify-between gap-9 bg-[#545454] px-4 py-6 rounded-4xl">
+      <a href="/admin/voter-status" class="flex justify-between gap-4 sm:gap-9 bg-[#545454] px-4 py-5 sm:py-6 rounded-4xl min-w-0">
         <div class="text-white">
           <div style="font-size:28px;font-weight:700">{{ $stats['voted'] ?? 0 }}</div>
           <div class="bg-[#243539] px-4 py-1 rounded-4xl text-xs">Voted</div>
@@ -54,15 +54,15 @@
     </div>
 
     {{-- Vote tally --}}
-    <h3 class="mt-6 font-semibold text-lg px-11">Vote’s Tally</h3>
+    <h3 class="mt-4 sm:mt-6 font-semibold text-lg px-3 sm:px-6 lg:px-11">Vote’s Tally</h3>
 
     @if(!$currentElection)
-      <p class="flex justify-center items-center px-11 mt-2 text-sm text-gray-700 min-h-[55vh] text-center font-extrabold">
+      <p class="flex justify-center items-center px-3 sm:px-6 lg:px-11 mt-2 text-sm text-gray-700 min-h-[40vh] sm:min-h-[55vh] text-center font-extrabold">
         Voting is not open right now, so vote tallies are not shown. They appear again while an election is actively accepting votes.
       </p>
     @endif
 
-    <div class="mt-0.5 grid grid-cols-1 md:grid-cols-2 gap-6 p-11">
+    <div class="mt-0.5 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-3 sm:p-6 lg:p-11">
       @foreach($charts as $i => $cfg)
         <div class="rounded-[26px] bg-[#3f4347] text-white shadow overflow-hidden">
           <div class="px-4 py-2 border-b border-black/60 font-bold">

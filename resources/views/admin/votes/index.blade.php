@@ -3,13 +3,13 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex flex-col gap-6 px-10 pt-5">
+<div class="flex flex-col gap-6 px-3 sm:px-6 lg:px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Votes</h1>
     @if ($activeElection ?? null)
-    <div class="flex items-center justify-end">
+    <div class="flex items-stretch sm:items-center justify-end">
 			<form id="search-form" method="GET" action="{{ route('admin.votes.index') }}"
-						class="flex items-center gap-x-2">
+						class="flex flex-wrap items-center gap-x-2 gap-y-2 w-full sm:w-auto justify-end">
 				<label for="search">Search:</label>
 				<input id="search" name="q" type="search"
 							value="{{ $q ?? '' }}"
@@ -25,8 +25,8 @@
     @endif
   </div>
 
-	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
-		<table class="table-fixed w-full" id="votes-table">
+	<div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-x-auto">
+		<table class="table-fixed w-full min-w-[640px] text-sm sm:text-base" id="votes-table">
       <thead>
         <tr class="border-b-2 border-gray-400">
           <th class="py-3 px-6 text-center w-[5%]">No.</th>
@@ -63,7 +63,7 @@
   </div>
 
 	@if ($activeElection ?? null)
-	<div class="flex items-center justify-end gap-x-5 px-4 py-3">
+	<div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-3 sm:gap-x-5 px-4 py-3">
 		<form id="per-page-form" method="GET" action="{{ route('admin.votes.index') }}"
 					class="flex gap-x-2 items-center">
 			<label class="text-sm text-gray-600">Items per page:</label>

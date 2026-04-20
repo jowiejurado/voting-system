@@ -61,7 +61,7 @@
     alt="Logo"
     width="350"
     height="350"
-    class="logo bg-white rounded-full p-0 m-0"
+    class="logo bg-white rounded-full p-0 m-0 w-44 h-44 sm:w-56 sm:h-56 md:w-72 md:h-72 max-w-[min(100vw-2rem,350px)] max-h-[min(100vw-2rem,350px)] object-contain"
   />
 
   <div class="panel bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] w-full md:w-auto">

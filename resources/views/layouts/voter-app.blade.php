@@ -61,15 +61,15 @@
 			: null;
 	@endphp
 
-	<header class="h-16 bg-black text-white flex items-center justify-between px-6 shadow">
-		<div class="flex items-center gap-3">
-			<img src="{{ asset('logo.png') }}" alt="Logo" class="h-10 w-10 rounded-full object-contain bg-white">
-			<span class="uppercase tracking-wide font-extrabold text-sm sm:text-base">
+	<header class="h-16 bg-black text-white flex items-center justify-between gap-2 px-3 sm:px-6 shadow shrink-0">
+		<div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+			<img src="{{ asset('logo.png') }}" alt="Logo" class="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-contain bg-white shrink-0">
+			<span class="uppercase tracking-wide font-extrabold text-xs sm:text-sm md:text-base truncate">
 				PASEI Secured Online Voting System
 			</span>
 		</div>
 
-		<div class="relative" id="avatar-wrap">
+		<div class="relative shrink-0" id="avatar-wrap">
 			<!-- Trigger -->
 			<button
 				type="button"
@@ -129,7 +129,7 @@
 		</div>
 	</header>
 
-	<main class="min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
+	<main class="min-h-[calc(100vh-4rem)] w-full flex items-start sm:items-center justify-center overflow-x-auto overflow-y-auto py-4 px-2 sm:px-4">
 		@yield('content')
 		{{ $slot ?? '' }}
 	</main>
@@ -215,8 +215,8 @@
 		<div class="pt-2">
 			<p class="font-semibold">Authentication</p>
 
-			<div class="flex items-end gap-3 mt-2">
-				<div class="flex-1">
+			<div class="flex flex-col sm:flex-row sm:items-end gap-3 mt-2">
+				<div class="flex-1 min-w-0">
 					<label class="block text-sm mb-1 font-medium">One Time Passcode</label>
 					<input
 						type="text"
@@ -238,7 +238,7 @@
 				<button
 					type="button"
 					id="cp_send_otp"
-					class="h-10 px-4 cursor-pointer rounded-full bg-black text-white disabled:opacity-60"
+					class="h-10 px-4 cursor-pointer rounded-full bg-black text-white disabled:opacity-60 w-full sm:w-auto shrink-0"
 					data-route="{{ route('voter.send-otp') }}"
 					{{ old('__action')==='change-password' ? '' : '' }}>
 					Send Code

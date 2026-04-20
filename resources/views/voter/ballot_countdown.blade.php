@@ -3,9 +3,9 @@
 @extends('layouts.voter-app')
 
 @section('content')
-<div class="flex items-center justify-center h-[calc(100vh-4rem)] overflow-hidden px-4">
-  <div class="text-center max-w-xl">
-    <h1 class="text-3xl font-black mb-2">
+<div class="flex items-center justify-center min-h-[calc(100vh-4rem)] py-8 overflow-x-hidden overflow-y-auto px-4">
+  <div class="text-center max-w-xl w-full">
+    <h1 class="text-xl sm:text-2xl md:text-3xl font-black mb-2 leading-tight px-1">
       {{ $election->title ?? 'Upcoming Election' }}
     </h1>
     <p class="text-gray-600 mb-2">
@@ -24,21 +24,21 @@
     <p class="text-gray-600 mb-6"></p>
     @endisset
 
-		<div id="countdown" class="flex justify-center items-stretch gap-4 mb-6 flex-nowrap overflow-x-auto">
-			<div class="bg-white rounded-2xl shadow border p-4 w-28 text-center">
-				<div id="cd-days" class="text-4xl font-black">0</div>
+		<div id="countdown" class="flex justify-center items-stretch gap-2 sm:gap-4 mb-6 flex-nowrap overflow-x-auto pb-1 max-w-full">
+			<div class="bg-white rounded-2xl shadow border p-2 sm:p-4 w-20 sm:w-28 shrink-0 text-center">
+				<div id="cd-days" class="text-2xl sm:text-4xl font-black">0</div>
 				<div class="text-gray-600 font-semibold">Days</div>
 			</div>
-			<div class="bg-white rounded-2xl shadow border p-4 w-28 text-center">
-				<div id="cd-hours" class="text-4xl font-black">0</div>
+			<div class="bg-white rounded-2xl shadow border p-2 sm:p-4 w-20 sm:w-28 shrink-0 text-center">
+				<div id="cd-hours" class="text-2xl sm:text-4xl font-black">0</div>
 				<div class="text-gray-600 font-semibold">Hours</div>
 			</div>
-			<div class="bg-white rounded-2xl shadow border p-4 w-28 text-center">
-				<div id="cd-minutes" class="text-4xl font-black">0</div>
+			<div class="bg-white rounded-2xl shadow border p-2 sm:p-4 w-20 sm:w-28 shrink-0 text-center">
+				<div id="cd-minutes" class="text-2xl sm:text-4xl font-black">0</div>
 				<div class="text-gray-600 font-semibold">Minutes</div>
 			</div>
-			<div class="bg-white rounded-2xl shadow border p-4 w-28 text-center">
-				<div id="cd-seconds" class="text-4xl font-black">0</div>
+			<div class="bg-white rounded-2xl shadow border p-2 sm:p-4 w-20 sm:w-28 shrink-0 text-center">
+				<div id="cd-seconds" class="text-2xl sm:text-4xl font-black">0</div>
 				<div class="text-gray-600 font-semibold">Seconds</div>
 			</div>
 		</div>

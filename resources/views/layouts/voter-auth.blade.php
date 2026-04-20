@@ -61,7 +61,7 @@
 			</a>
 		@endif
 
-		<div class="min-h-screen flex items-center">
+		<div class="min-h-screen w-full flex items-center justify-center py-8 px-4 sm:px-6">
 			@yield('content')
 		</div>
   </main>

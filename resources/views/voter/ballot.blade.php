@@ -5,9 +5,9 @@
 @section('content')
 {{-- Voting ends countdown: same style as voting start countdown, no wrapper background --}}
 @if(!empty($votingEndsAtTimestampMs))
-<div class="fixed top-16 right-4 z-40 flex justify-center items-stretch gap-1.5 flex-nowrap pt-4">
-  <span class="text-gray-600 font-semibold self-center text-xs">Voting ends in</span>
-  <div id="ballot-countdown" class="flex justify-center items-stretch gap-1.5 flex-nowrap">
+<div class="fixed top-16 left-0 right-0 z-40 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 sm:left-auto sm:right-4 px-2 pt-2 sm:pt-4">
+  <span class="text-gray-600 font-semibold text-xs shrink-0">Voting ends in</span>
+  <div id="ballot-countdown" class="flex justify-center items-stretch gap-1.5 flex-nowrap shrink-0">
     <div class="bg-white rounded-xl shadow border p-1.5 w-13 h-13 flex flex-col items-center justify-center text-center shrink-0">
       <div id="bc-days" class="text-sm font-black tabular-nums leading-none">0</div>
       <div class="text-gray-600 font-semibold text-[10px] leading-tight">Days</div>
@@ -28,45 +28,45 @@
 </div>
 @endif
 
-<div class="flex flex-col items-center justify-center gap-y-6 m-7">
+<div class="flex flex-col items-center justify-center gap-y-4 sm:gap-y-6 mx-auto w-full max-w-[1280px] px-2 py-4 sm:m-7 sm:px-4">
 
   {{-- Title --}}
-  <h1 class="bg-black text-white py-4 px-12 text-4xl font-black rounded-full">
+  <h1 class="bg-black text-white py-2 px-4 sm:py-4 sm:px-8 md:px-12 text-center text-lg sm:text-2xl md:text-4xl font-black rounded-full max-w-full leading-tight">
     {{ $election->title ?? 'Election' }}
   </h1>
 
   {{-- Outer Card --}}
-  <div class="flex flex-col gap-10 bg-[#f3f3f3] rounded-4xl p-10 min-w-[1280px] min-h-[550px]">
+  <div class="flex flex-col gap-6 sm:gap-10 bg-[#f3f3f3] rounded-4xl p-4 sm:p-6 lg:p-10 w-full min-w-0 min-h-[420px] sm:min-h-[550px]">
 
     {{-- Header: position name + Skip (or Receipt title) --}}
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
       <span id="position-pill"
-            class="px-6 py-1.5 text-2xl bg-black rounded-full font-black text-white">
+            class="px-4 sm:px-6 py-1.5 text-base sm:text-xl md:text-2xl bg-black rounded-full font-black text-white truncate max-w-full text-center sm:text-left">
         <!-- filled by JS -->
       </span>
 
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end">
         <button type="button" id="btn-prev"
-                class="cursor-pointer bg-gray-700 hover:bg-gray-700/80 px-6 text-white py-1.5 rounded-full text-2xl font-black hidden">
+                class="cursor-pointer bg-gray-700 hover:bg-gray-700/80 px-4 sm:px-6 text-white py-1.5 rounded-full text-lg sm:text-2xl font-black hidden">
           Previous
         </button>
 
         <button type="button" id="btn-skip"
-                class="cursor-pointer bg-black hover:bg-black/80 px-6 text-white py-1.5 rounded-full text-2xl font-black">
+                class="cursor-pointer bg-black hover:bg-black/80 px-4 sm:px-6 text-white py-1.5 rounded-full text-lg sm:text-2xl font-black">
           Skip
         </button>
       </div>
     </div>
 
     {{-- Candidate Grid / Receipt Area --}}
-    <div id="content-area" class="flex flex-wrap gap-x-10 gap-y-10 items-start justify-center">
+    <div id="content-area" class="flex flex-wrap gap-x-4 gap-y-8 sm:gap-x-10 sm:gap-y-10 items-start justify-center min-w-0">
       {{-- filled by JS --}}
     </div>
 
     {{-- Footer Nav --}}
     <div id="footer-nav" class="flex items-center justify-end">
       <button type="button" id="btn-next"
-              class="cursor-pointer bg-green-600 hover:bg-green-600/80 disabled:bg-gray-400 disabled:cursor-not-allowed px-6 text-white py-1.5 rounded-full text-2xl font-black">
+              class="cursor-pointer bg-green-600 hover:bg-green-600/80 disabled:bg-gray-400 disabled:cursor-not-allowed px-4 sm:px-6 text-white py-1.5 rounded-full text-lg sm:text-2xl font-black w-full sm:w-auto">
         Next
       </button>
     </div>
@@ -259,13 +259,13 @@
   function renderPosition(pos){
     // note
     const note = document.createElement('p');
-    note.className = 'text-lg text-gray-700 w-full text-center';
+    note.className = 'text-sm sm:text-lg text-gray-700 w-full text-center px-1';
     note.innerHTML = `Select up to <b>${pos.max}</b> candidate(s).`;
     content.appendChild(note);
 
     // grid
     const grid = document.createElement('div');
-    grid.className = 'flex flex-wrap gap-x-10 gap-y-10 items-start justify-center w-full';
+    grid.className = 'flex flex-wrap gap-x-4 gap-y-8 sm:gap-x-10 sm:gap-y-10 items-start justify-center w-full';
     pos.candidates.forEach(c => grid.appendChild(cardForCandidate(pos, c)));
     content.appendChild(grid);
   }
@@ -276,7 +276,7 @@
     const isChecked = selected.includes(cand.id);
 
     const wrap = document.createElement('div');
-    wrap.className = 'basis-[calc(33.333%-2.5rem)] flex flex-col items-center gap-6';
+    wrap.className = 'w-full sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-2.5rem)] max-w-md sm:max-w-none flex flex-col items-center gap-4 sm:gap-6';
 
     // avatar
     const avatar = document.createElement('div');
@@ -311,8 +311,8 @@
 
 	function voteBtnClass(selected){
 		return selected
-			? 'bg-green-600 hover:bg-green-600/80 cursor-pointer px-6 text-white py-2 rounded-full text-2xl font-black'
-			: 'bg-black hover:bg-black/80 cursor-pointer px-6 text-white py-2 rounded-full text-2xl font-black';
+			? 'bg-green-600 hover:bg-green-600/80 cursor-pointer px-4 sm:px-6 text-white py-2 rounded-full text-lg sm:text-2xl font-black w-full max-w-xs sm:w-auto'
+			: 'bg-black hover:bg-black/80 cursor-pointer px-4 sm:px-6 text-white py-2 rounded-full text-lg sm:text-2xl font-black w-full max-w-xs sm:w-auto';
 	}
 
   function toggleSelection(pos, cand, btnEl){
@@ -363,14 +363,14 @@
 		list.className = 'bg-white rounded-3xl p-4 border divide-y';
 		positions.forEach(pos => {
 			const row = document.createElement('div');
-			row.className = 'py-3 grid grid-cols-12 gap-4 items-start';
+			row.className = 'py-3 grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-start';
 
 			const left = document.createElement('div');
-			left.className = 'col-span-4 font-semibold';
+			left.className = 'sm:col-span-4 font-semibold';
 			left.textContent = pos.name;
 
 			const right = document.createElement('div');
-			right.className = 'col-span-8 text-sm';
+			right.className = 'sm:col-span-8 text-sm break-words';
 			const chosen = getChosen(pos.id);
 
 			if (chosen.length) {
@@ -391,14 +391,14 @@
 
 		// Actions (only one Submit + a Reject)
 		const actions = document.createElement('div');
-		actions.className = 'flex items-center justify-end gap-3 mt-4';
+		actions.className = 'flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3 mt-4';
 		actions.innerHTML = `
 			<button type="button" id="btn-retake"
-							class="px-5 py-2 rounded-full bg-red-500 text-white font-semibold">
+							class="w-full sm:w-auto px-5 py-2 rounded-full bg-red-500 text-white font-semibold">
 				Reject
 			</button>
 			<button type="button" id="btn-submit"
-							class="px-6 py-2 rounded-full bg-green-600 hover:bg-green-600/80 text-white font-black">
+							class="w-full sm:w-auto px-6 py-2 rounded-full bg-green-600 hover:bg-green-600/80 text-white font-black">
 				Submit
 			</button>
 		`;

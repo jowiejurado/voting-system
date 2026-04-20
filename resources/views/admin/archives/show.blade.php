@@ -10,7 +10,7 @@
     </form>
   </x-slot:nav>
 
-  <div class="px-10 pt-5 pb-8 flex flex-col gap-6">
+  <div class="px-3 sm:px-6 lg:px-10 pt-5 pb-8 flex flex-col gap-6 min-w-0">
 
     {{-- Back button inside page --}}
     <div>
@@ -47,7 +47,7 @@
           $topVotes = $rows[0]['votes'] ?? 0;
         ?>
 
-        <div class="border border-gray-300 rounded-2xl overflow-hidden bg-white shadow-sm">
+        <div class="border border-gray-300 rounded-2xl overflow-x-auto bg-white shadow-sm min-w-0">
           <div class="px-4 py-3 bg-gray-100 border-b border-gray-200 flex items-center justify-between">
             <div class="font-semibold text-gray-800">
               {{ $positionResult['position'] }}

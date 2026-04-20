@@ -5,28 +5,28 @@
 @extends('layouts.voter-auth')
 
 @section('content')
-<section class="flex items-center mx-auto gap-[120px]">
-	<img src="{{ asset('logo.png') }}" alt="Logo" width="350" height="350" class="bg-white rounded-full p-0 m-0" />
+<section class="flex flex-col md:flex-row items-center justify-center mx-auto gap-8 md:gap-16 lg:gap-[120px] w-full max-w-5xl px-2">
+	<img src="{{ asset('logo.png') }}" alt="Logo" width="350" height="350" class="bg-white rounded-full p-0 m-0 w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-[350px] lg:h-[350px] object-contain shrink-0" />
 
-	<div class="flex flex-col justify-center items-center">
-		<h1 class="text-2xl uppercase text-black font-black text-center mb-8">PASEI SECURED ONLINE VOTING SYSTEM</h1>
-		<div class="bg-white shadow-2xl p-[32px] rounded-4xl max-w-[500px] items-center flex flex-col">
+	<div class="flex flex-col justify-center items-center w-full min-w-0">
+		<h1 class="text-base sm:text-xl md:text-2xl uppercase text-black font-black text-center mb-4 sm:mb-8 px-1 leading-tight">PASEI SECURED ONLINE VOTING SYSTEM</h1>
+		<div class="bg-white shadow-2xl p-6 sm:p-[32px] rounded-4xl max-w-[500px] w-full items-center flex flex-col">
 			<form id="face-form" method="POST" action="{{ route('voter.face.verify') }}" class="space-y-4">
 				@csrf
 				<input type="hidden" name="face_descriptor_json" id="face_descriptor_json">
 				<input type="hidden" name="next" value="{{ $nextUrl }}">
 
 				<div class="space-y-2">
-					<div class="flex items-center justify-between">
+					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
 						<label class="font-semibold">Face Verification</label>
 						<span class="text-xs text-gray-500">Good lighting • No mask/sunglasses</span>
 					</div>
 
-					<div class="flex items-center gap-4">
-						<video id="cam" autoplay playsinline muted width="240" height="180" class="bg-black rounded"></video>
-						<canvas id="snap" width="240" height="180" class="hidden rounded border"></canvas>
+					<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full">
+						<video id="cam" autoplay playsinline muted width="240" height="180" class="bg-black rounded w-full max-w-[280px] sm:max-w-none mx-auto sm:mx-0"></video>
+						<canvas id="snap" width="240" height="180" class="hidden rounded border max-w-full mx-auto sm:mx-0"></canvas>
 
-						<div class="flex flex-col gap-2">
+						<div class="flex flex-col gap-2 w-full sm:w-auto shrink-0">
 							<button type="button" id="btn-capture" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded disabled:opacity-50" disabled>
 								Capture
 							</button>

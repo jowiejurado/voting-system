@@ -62,15 +62,24 @@
 			: null;
 	@endphp
 
-	<header class="h-16 bg-[#54585d] text-white flex items-center justify-between px-6 shadow">
-		<div class="flex items-center gap-3">
-			<img src="{{ asset('logo.png') }}" alt="Logo" class="h-10 w-10 rounded-full object-contain bg-white">
-			<span class="uppercase tracking-wide font-extrabold text-sm sm:text-base">
+	<header class="h-16 bg-[#54585d] text-white flex items-center justify-between gap-2 px-3 sm:px-6 shadow shrink-0">
+		<label
+			for="admin-nav"
+			class="lg:hidden inline-flex items-center justify-center size-10 rounded-lg border border-white/30 bg-white/10 text-white cursor-pointer hover:bg-white/20 shrink-0"
+			aria-label="Open navigation menu"
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+			</svg>
+		</label>
+		<div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+			<img src="{{ asset('logo.png') }}" alt="Logo" class="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-contain bg-white shrink-0">
+			<span class="uppercase tracking-wide font-extrabold text-xs sm:text-sm md:text-base truncate">
 				PASEI Secured Online Voting System
 			</span>
 		</div>
 
-		<div class="flex items-center gap-3">
+		<div class="flex items-center gap-2 sm:gap-3 shrink-0">
 			@php
 				$fullname = Auth::user()->first_name . ' ' . Auth::user()->last_name;
 				$position = ucwords(str_replace(['-','_'], ' ', Auth::user()->type));
@@ -81,7 +90,7 @@
 				class="group flex items-center gap-3 cursor-pointer rounded-full px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition"
 				data-modal-open="#change-password-modal"
 				aria-label="Open change password modal">
-				<div class="flex flex-col items-end text-right text-xs font-semibold leading-tight">
+				<div class="hidden sm:flex flex-col items-end text-right text-xs font-semibold leading-tight">
 					<span class="text-white">{{ $fullname }}</span>
 					<span class="opacity-80">({{ $position }})</span>
 				</div>
@@ -94,8 +103,12 @@
 		</div>
 	</header>
 
-	<div class="flex min-h-[calc(100vh-4rem)]">
-		<aside class="w-64 bg-[#4a4d52] text-white flex-shrink-0 border-r border-black/10">
+	<div class="flex min-h-[calc(100vh-4rem)] relative">
+		<input type="checkbox" id="admin-nav" class="peer sr-only" autocomplete="off">
+
+		<label for="admin-nav" class="fixed inset-0 top-16 z-40 bg-black/50 opacity-0 pointer-events-none transition-opacity duration-200 peer-checked:opacity-100 peer-checked:pointer-events-auto lg:hidden" aria-hidden="true"></label>
+
+		<aside class="fixed top-16 left-0 bottom-0 z-50 w-64 bg-[#4a4d52] text-white flex-shrink-0 border-r border-black/10 overflow-y-auto -translate-x-full transition-transform duration-200 ease-out peer-checked:translate-x-0 lg:static lg:top-auto lg:z-auto lg:translate-x-0">
 			<nav>
 				<p class="px-4 py-2.5 text-xs font-extrabold uppercase tracking-wider text-[#9f9f9f] bg-[#403f3b] border-2 border-[#373737]">Reports</p>
 				<ul>
@@ -202,8 +215,8 @@
 			</nav>
 		</aside>
 
-		<main class="flex-1 overflow-x-hidden">
-			<div class="p-0">
+		<main class="flex-1 min-w-0 w-full overflow-x-hidden">
+			<div class="p-0 pb-6">
 				@yield('content')
 				{{ $slot ?? '' }}
 			</div>
@@ -291,8 +304,8 @@
 		<div class="pt-2">
 			<p class="font-semibold">Authentication</p>
 
-			<div class="flex items-end gap-3 mt-2">
-				<div class="flex-1">
+			<div class="flex flex-col sm:flex-row sm:items-end gap-3 mt-2">
+				<div class="flex-1 min-w-0">
 					<label class="block text-sm mb-1 font-medium">One Time Passcode</label>
 					<input
 						type="text"
@@ -314,7 +327,7 @@
 				<button
 					type="button"
 					id="cp_send_otp"
-					class="h-10 px-4 cursor-pointer rounded-full bg-black text-white disabled:opacity-60"
+					class="h-10 px-4 cursor-pointer rounded-full bg-black text-white disabled:opacity-60 w-full sm:w-auto shrink-0"
 					data-route="{{ route('admin.send-otp') }}"
 					{{ old('__action')==='change-password' ? '' : '' }}>
 					Send Code
@@ -451,5 +464,13 @@
 	@endpush
 
 	@stack('scripts')
+	<script>
+		document.querySelector('aside nav')?.addEventListener('click', function (e) {
+			const link = e.target.closest('a');
+			if (!link) return;
+			const toggle = document.getElementById('admin-nav');
+			if (toggle) toggle.checked = false;
+		});
+	</script>
 </body>
 </html>

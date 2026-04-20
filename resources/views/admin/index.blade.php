@@ -3,15 +3,15 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="flex flex-col gap-6 px-10 pt-5">
+<div class="flex flex-col gap-6 px-3 sm:px-6 lg:px-10 pt-5">
   <div class="flex flex-col gap-y-5">
     <h1 class="text-2xl font-black text-[#0b252a]">Admin</h1>
-    <div class="flex items-center">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
 
       @if (Auth::user() && Auth::user()->type == 'system-admin')
         <button
           type="button" id="btn-add"
-          class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white"
+          class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white w-fit"
           data-modal-open="#admin-modal">
           Add Admin
         </button>
@@ -20,14 +20,14 @@
       @if (Auth::user() && Auth::user()->type == 'system-admin')
         <button
           type="button" id="btn-add-system"
-          class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white ml-4"
+          class="bg-[#545454] hover:bg-[#686868] cursor-pointer px-6 py-2 rounded-full text-white sm:ml-4 w-fit"
           data-modal-open="#system-admin-modal">
           Add System Admin
         </button>
       @endif
 
       <form id="search-form" method="GET" action="{{ route('admin.index') }}"
-            class="flex items-center gap-x-2 ml-auto">
+            class="flex items-center gap-x-2 flex-wrap w-full sm:w-auto sm:ml-auto">
         <label for="search">Search:</label>
         <input id="search" name="q" type="search"
                value="{{ $q ?? '' }}"
@@ -38,8 +38,8 @@
     </div>
   </div>
 
-  <div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-hidden">
-    <table class="table-fixed w-full" id="admins-table">
+  <div id="table-wrap" class="relative border-2 border-gray-400 rounded-3xl w-full overflow-x-auto">
+    <table class="table-fixed w-full min-w-[640px] text-sm sm:text-base" id="admins-table">
       <thead>
         <tr class="border-b-2 border-gray-400">
           <th class="py-3 text-center">Last Name</th>
@@ -137,7 +137,7 @@
     </div>
   </div>
 
-  <div class="flex items-center justify-end gap-x-5 px-4 py-3">
+  <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-3 sm:gap-x-5 px-4 py-3">
     <form id="per-page-form" method="GET" action="{{ route('admin.index') }}"
           class="flex gap-x-2 items-center">
       <label class="text-sm text-gray-600">Items per page:</label>

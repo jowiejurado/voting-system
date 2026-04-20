@@ -52,3 +52,10 @@ a{color:#9bd6ff;text-decoration:none}
 	font-size: 32px;
 	font-weight: 700;
 }
+
+@media (max-width: 640px) {
+	.text-label {
+		font-size: 1.125rem;
+		line-height: 1.4;
+	}
+}

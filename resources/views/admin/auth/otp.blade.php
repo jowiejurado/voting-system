@@ -8,9 +8,9 @@
 @endphp
 @extends('layouts.auth')
 @section('content')
-	<div class="flex items-center mx-auto gap-[120px]">
-		<img src="{{ asset('logo.png') }}" alt="Logo" width="350" height="350" class="bg-white rounded-full p-0 m-0" />
-		<div class="bg-white p-[32px] rounded-4xl max-w-[500px] items-center flex flex-col">
+	<div class="flex flex-col md:flex-row items-center justify-center mx-auto gap-8 md:gap-16 lg:gap-[120px] w-full max-w-5xl px-2">
+		<img src="{{ asset('logo.png') }}" alt="Logo" width="350" height="350" class="bg-white rounded-full p-0 m-0 w-40 h-40 sm:w-52 sm:h-52 md:w-64 md:h-64 lg:w-[350px] lg:h-[350px] object-contain shrink-0" />
+		<div class="bg-white p-6 sm:p-[32px] rounded-4xl max-w-[500px] w-full items-center flex flex-col min-w-0">
 			<form method="post" action="{{ $otpVerifyRoute ?? route('admin.otp.verify') }}" class="flex flex-col items-center gap-[24px]">
 				@csrf
 				<h4 class="text-lg text-black font-bold">2nd Step AUTHENTICATION - OTP Verification</h4>
