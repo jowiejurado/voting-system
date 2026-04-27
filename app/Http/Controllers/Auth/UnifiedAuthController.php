@@ -453,7 +453,10 @@ class UnifiedAuthController extends Controller
 			return redirect()->route($p . '.verify.method');
 		}
 
-		if ($user && $this->otpService->verifyOtp($user, $request->code)) {
+		$otpChannel = session('login_otp_channel');
+		$otpChannel = in_array($otpChannel, ['sms', 'email'], true) ? $otpChannel : null;
+
+		if ($user && $this->otpService->verifyOtp($user, $request->code, 'login', $otpChannel)) {
 			$request->session()->forget(['login_otp_attempts', 'login_chose_otp', 'login_chose_face', 'login_otp_channel']);
 			session(['full_login_complete' => true, 'login_otp_sent' => false]);
 

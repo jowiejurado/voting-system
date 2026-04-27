@@ -70,19 +70,49 @@ class OtpService
 		}
 	}
 
-	public function verifyOtp(User $user, string $code, ?string $context = null): bool
+	/**
+	 * @param  string|null  $deliveryChannel  "sms"|"email" when verifying login OTP (must match the channel the code was sent on); null uses latest unused across channels.
+	 */
+	public function verifyOtp(User $user, string $code, ?string $context = null, ?string $deliveryChannel = null): bool
 	{
-		$otp = OtpCode::where('user_id', $user->id)
-			->where('used', false)
-			// ->where('expires_at', '>=', now())
-			->latest()
-			->first();
-
-		if (!$otp) {
+		$normalized = preg_replace('/\D+/', '', trim($code));
+		if ($normalized === '') {
 			return false;
 		}
 
-		$valid = hash_equals($otp->code, trim($code));
+		$query = OtpCode::query()
+			->where('user_id', $user->id)
+			->where('used', false)
+			->where('expires_at', '>=', now('Asia/Manila'));
+
+		if (in_array($deliveryChannel, ['sms', 'email'], true)) {
+			$recipient = $deliveryChannel === 'email'
+				? strtolower((string) $user->email)
+				: (string) $user->phone_number;
+
+			$otp = $query->orderByDesc('id')
+				->get()
+				->first(function (OtpCode $row) use ($recipient, $deliveryChannel) {
+					$stored = $deliveryChannel === 'email'
+						? strtolower((string) $row->phone_number)
+						: (string) $row->phone_number;
+
+					return $stored === $recipient;
+				});
+		} else {
+			$otp = $query->latest('id')->first();
+		}
+
+		if (! $otp) {
+			return false;
+		}
+
+		$storedCode = (string) $otp->code;
+		if (strlen($normalized) !== strlen($storedCode)) {
+			return false;
+		}
+
+		$valid = hash_equals($storedCode, $normalized);
 
 		if ($valid) {
 			$otp->used = true;
