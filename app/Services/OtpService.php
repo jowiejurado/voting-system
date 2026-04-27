@@ -49,7 +49,9 @@ class OtpService
 					Log::warning("User {$user->first_name} {$user->last_name} has no email.");
 					return null;
 				}
-				Mail::to($user->email)->send(new OtpCodeMail($user, $code, $context));
+				Mail::mailer(config('mail.otp_mailer', 'resend'))
+					->to($user->email)
+					->send(new OtpCodeMail($user, $code, $context));
 			}
 
 			// Persist the OTP
