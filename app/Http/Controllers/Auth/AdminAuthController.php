@@ -29,10 +29,21 @@ class AdminAuthController extends Controller
 
 		$channel = in_array($request->input('channel'), ['sms', 'email'], true) ? $request->input('channel') : 'sms';
 		$context = $request->input('context', 'change-password');
-		$this->otpService->sendOTP($user, $context, $channel);
+		$sent = $this->otpService->sendOTP($user, $context, $channel) !== null;
 
 		if ($context === 'login') {
 			session(['login_otp_channel' => $channel]);
+		}
+
+		if (! $sent) {
+			$message = $channel === 'email'
+				? 'We could not send the code to your email. Try again or use SMS instead.'
+				: 'We could not send the code by SMS. Try again or use email instead.';
+
+			return back()->with([
+				'error' => $message,
+				'buttonText' => 'TRY AGAIN',
+			]);
 		}
 
 		return back()->with([

@@ -5,6 +5,7 @@
 	$maskedEmail = $maskedEmail ?? '';
 	$alternateOtpChannel = $otpDeliveryChannel === 'sms' ? 'email' : 'sms';
 	$alternateOtpButtonLabel = $otpDeliveryChannel === 'sms' ? 'Send OTP via Email' : 'Send OTP via Phone number';
+	$resendOtpLabel = $otpDeliveryChannel === 'email' ? 'Resend code to email' : 'Resend code via SMS';
 @endphp
 @extends('layouts.auth')
 @section('content')
@@ -25,14 +26,83 @@
 				<button class="inline-block py-4 px-8 rounded-3xl border-none bg-black text-white cursor-pointer font-semibold" type="submit">Proceed</button>
 			</form>
 
-			<form method="post" action="{{ $sendOtpRoute ?? route('admin.send-otp') }}" class="mt-4">
+			<div class="mt-6 w-full max-w-sm flex flex-col items-center gap-3 border-t border-gray-200 pt-6">
+				<p class="text-sm text-gray-600 text-center m-0">Didn't receive the code?</p>
+				<form method="post" action="{{ $sendOtpRoute ?? route('admin.send-otp') }}" class="w-full flex justify-center">
+					@csrf
+					<input type="hidden" name="context" value="login">
+					<input type="hidden" name="channel" value="{{ $otpDeliveryChannel }}">
+					<button type="submit" data-otp-send class="inline-block py-3 px-6 rounded-3xl border-2 border-gray-900 bg-white text-black cursor-pointer font-semibold w-full sm:w-auto text-center">
+						{{ $resendOtpLabel }}
+					</button>
+				</form>
+				<p class="text-xs text-gray-500 text-center m-0 px-2">Only the most recent code is valid.</p>
+			</div>
+
+			<form method="post" action="{{ $sendOtpRoute ?? route('admin.send-otp') }}" class="mt-4 flex flex-col items-center gap-2">
 				@csrf
 				<input type="hidden" name="context" value="login">
 				<input type="hidden" name="channel" value="{{ $alternateOtpChannel }}">
-				<button class="inline-block py-3 px-6 rounded-3xl border-none bg-gray-100 text-black cursor-pointer font-semibold" type="submit">
+				<span class="text-xs text-gray-500 uppercase tracking-wide">Or use another method</span>
+				<button type="submit" data-otp-send class="inline-block py-3 px-6 rounded-3xl border-none bg-gray-100 text-black cursor-pointer font-semibold">
 					{{ $alternateOtpButtonLabel }}
 				</button>
 			</form>
 		</div>
 	</div>
 @endsection
+
+@push('scripts')
+	<script>
+		(function () {
+			var COOLDOWN_MS = 45000;
+			var forms = document.querySelectorAll('form[action*="send-otp"]');
+			if (!forms.length) return;
+
+			function parseCooldownEnd() {
+				var raw = sessionStorage.getItem('otpSendCooldownUntil');
+				var n = raw ? parseInt(raw, 10) : 0;
+				return isNaN(n) ? 0 : n;
+			}
+
+			function setButtonsDisabled(disabled, label) {
+				document.querySelectorAll('[data-otp-send]').forEach(function (btn) {
+					btn.disabled = disabled;
+					if (label) btn.textContent = label;
+				});
+			}
+
+			function restoreButtonLabels() {
+				document.querySelectorAll('[data-otp-send]').forEach(function (btn) {
+					btn.textContent = btn.getAttribute('data-label') || btn.textContent;
+				});
+			}
+
+			document.querySelectorAll('[data-otp-send]').forEach(function (btn) {
+				if (!btn.getAttribute('data-label')) btn.setAttribute('data-label', btn.textContent.trim());
+			});
+
+			function tick() {
+				var until = parseCooldownEnd();
+				var left = until - Date.now();
+				if (left <= 0) {
+					setButtonsDisabled(false);
+					restoreButtonLabels();
+					sessionStorage.removeItem('otpSendCooldownUntil');
+					return;
+				}
+				setButtonsDisabled(true, 'Wait ' + Math.ceil(left / 1000) + 's');
+				setTimeout(tick, 500);
+			}
+
+			var until = parseCooldownEnd();
+			if (until > Date.now()) tick();
+
+			forms.forEach(function (form) {
+				form.addEventListener('submit', function () {
+					sessionStorage.setItem('otpSendCooldownUntil', String(Date.now() + COOLDOWN_MS));
+				});
+			});
+		})();
+	</script>
+@endpush
