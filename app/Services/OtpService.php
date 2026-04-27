@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Mail;
 
 class OtpService
 {
+	private const IPROG_SMS_URL = 'https://www.iprogsms.com/api/v1/sms_messages';
+
 	public function sendOTP(User $user, string $context = 'login', string $channel = 'sms'): ?OtpCode
 	{
 		$channel = in_array($channel, ['sms', 'email'], true) ? $channel : 'sms';
@@ -22,25 +24,57 @@ class OtpService
 			$message   = 'Your one-time passcode is ' . $code;
 
 			if ($channel === 'sms') {
-				if (!$user->phone_number) {
+				if (! $user->phone_number) {
 					Log::warning("User {$user->first_name} {$user->last_name} has no phone number.");
+
 					return null;
 				}
 
-				// Configure these in config/services.php and .env (see note below)
-				$apiKey    = config('services.iprog_sms.api_key');
-				// $postQuery = 'https://sms.iprogtech.com/api/v1/sms_messages?api_token='. $apiKey .'&message='. $message .'&phone_number=' . $user->phone_number . '&sms_provider=2';
+				$apiKey = config('services.iprog_sms.api_key');
+				if (! is_string($apiKey) || $apiKey === '') {
+					Log::error('SMS OTP skipped: IPROG_SMS_API_TOKEN is not set.');
 
-				$postQuery = 'https://www.iprogsms.com/api/v1/sms_messages?api_token='. $apiKey .'&message='. $message .'&phone_number='. $user->phone_number .'&sms_provider=2';
+					return null;
+				}
 
+				$phoneForApi = $this->canonicalPhoneForSms((string) $user->phone_number);
+				if ($phoneForApi === '') {
+					Log::warning('SMS OTP skipped: phone number has no digits.', ['user_id' => $user->id]);
 
-				$response = Http::asForm()->post($postQuery);
+					return null;
+				}
+
+				$payload = [
+					'api_token' => $apiKey,
+					'phone_number' => $phoneForApi,
+					'message' => $message,
+				];
+				$provider = config('services.iprog_sms.sms_provider');
+				if ($provider !== null && $provider !== '') {
+					$payload['sms_provider'] = (int) $provider;
+				}
+
+				$response = Http::acceptJson()
+					->timeout(15)
+					->asForm()
+					->post(self::IPROG_SMS_URL, $payload);
 
 				if ($response->failed()) {
-					Log::error('Sending OTP failed', [
+					Log::error('IProg SMS HTTP error', [
 						'status' => $response->status(),
-						'body'   => $response->body(),
+						'body' => $response->body(),
 					]);
+
+					return null;
+				}
+
+				$body = $response->json();
+				if (! is_array($body) || (int) ($body['status'] ?? 0) !== 200) {
+					Log::error('IProg SMS API rejected the message', [
+						'response' => $body,
+						'http_status' => $response->status(),
+					]);
+
 					return null;
 				}
 			} else {
@@ -54,11 +88,13 @@ class OtpService
 					->send(new OtpCodeMail($user, $code, $context));
 			}
 
-			// Persist the OTP
+			// Persist the OTP (SMS uses same canonical format as sent to the gateway for verify matching)
 			$otp = OtpCode::create([
 				'user_id'      => $user->id,
 				// Reuse column to store recipient (phone for sms, email for email) for now
-				'phone_number' => $channel === 'sms' ? (string) $user->phone_number : (string) $user->email,
+				'phone_number' => $channel === 'sms'
+					? $this->canonicalPhoneForSms((string) $user->phone_number)
+					: (string) $user->email,
 				'code'         => $code,  // store as string to avoid leading-zero issues
 				'expires_at'   => $expires,
 			]);
@@ -88,14 +124,14 @@ class OtpService
 		if (in_array($deliveryChannel, ['sms', 'email'], true)) {
 			$recipient = $deliveryChannel === 'email'
 				? strtolower((string) $user->email)
-				: (string) $user->phone_number;
+				: $this->canonicalPhoneForSms((string) $user->phone_number);
 
 			$otp = $query->orderByDesc('id')
 				->get()
 				->first(function (OtpCode $row) use ($recipient, $deliveryChannel) {
 					$stored = $deliveryChannel === 'email'
 						? strtolower((string) $row->phone_number)
-						: (string) $row->phone_number;
+						: $this->canonicalPhoneForSms((string) $row->phone_number);
 
 					return $stored === $recipient;
 				});
@@ -120,5 +156,31 @@ class OtpService
 		}
 
 		return $valid;
+	}
+
+	/**
+	 * Normalize stored / API phone numbers (Philippines: 09… / 9… → 639… digits only).
+	 */
+	private function canonicalPhoneForSms(string $raw): string
+	{
+		$digits = preg_replace('/\D+/', '', $raw) ?? '';
+
+		if ($digits === '') {
+			return '';
+		}
+
+		if (strlen($digits) === 11 && str_starts_with($digits, '0')) {
+			return '63'.substr($digits, 1);
+		}
+
+		if (strlen($digits) === 10 && str_starts_with($digits, '9')) {
+			return '63'.$digits;
+		}
+
+		if (str_starts_with($digits, '63')) {
+			return strlen($digits) > 12 ? substr($digits, 0, 12) : $digits;
+		}
+
+		return $digits;
 	}
 }

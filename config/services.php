@@ -49,5 +49,7 @@ return [
 
 	'iprog_sms' => [
 		'api_key' => env('IPROG_SMS_API_TOKEN'),
+		// Optional: 0, 1, or 2 — see https://www.iprogsms.com/api/v1/documentation
+		'sms_provider' => env('IPROG_SMS_PROVIDER'),
 	],
 ];
