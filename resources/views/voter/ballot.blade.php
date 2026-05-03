@@ -31,7 +31,7 @@
 <div class="flex flex-col items-center justify-center gap-y-4 sm:gap-y-6 mx-auto w-full max-w-[1280px] px-2 py-4 sm:m-7 sm:px-4">
 
   {{-- Title --}}
-  <h1 class="bg-black text-white py-2 px-4 sm:py-4 sm:px-8 md:px-12 text-center text-lg sm:text-2xl md:text-4xl font-black rounded-full max-w-full leading-tight">
+  <h1 class="text-black py-2 px-4 sm:py-4 sm:px-8 md:px-12 text-center text-lg sm:text-2xl md:text-4xl font-black rounded-full max-w-full leading-tight">
     {{ $election->title ?? 'Election' }}
   </h1>
 
@@ -41,7 +41,7 @@
     {{-- Header: position name + Skip (or Receipt title) --}}
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
       <span id="position-pill"
-            class="px-4 sm:px-6 py-1.5 text-base sm:text-xl md:text-2xl bg-black rounded-full font-black text-white truncate max-w-full text-center sm:text-left">
+            class="px-4 sm:px-6 py-1.5 text-base sm:text-xl md:text-2xl rounded-full font-black text-black truncate max-w-full text-center sm:text-left">
         <!-- filled by JS -->
       </span>
 
@@ -95,7 +95,7 @@
     <div class="mt-6 flex justify-center gap-3">
       <button type="button" id="skip-cancel"
               class="px-5 py-2 rounded-full bg-red-500 text-white font-semibold">
-        Cancel
+        No
       </button>
       <button type="button" id="skip-confirm"
               class="px-5 py-2 rounded-full bg-green-500 text-white font-black">
@@ -120,7 +120,7 @@
     <div class="mt-6 flex justify-center gap-3">
       <button type="button" id="retake-cancel"
               class="px-5 py-2 rounded-full bg-red-500 text-white font-semibold">
-        Cancel
+        No
       </button>
       <button type="button" id="retake-confirm"
               class="px-5 py-2 rounded-full bg-green-500 text-white font-black">
@@ -395,7 +395,7 @@
 		actions.innerHTML = `
 			<button type="button" id="btn-retake"
 							class="w-full sm:w-auto px-5 py-2 rounded-full bg-red-500 text-white font-semibold">
-				Reject
+				Cancel
 			</button>
 			<button type="button" id="btn-submit"
 							class="w-full sm:w-auto px-6 py-2 rounded-full bg-green-600 hover:bg-green-600/80 text-white font-black">

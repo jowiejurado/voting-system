@@ -27,9 +27,10 @@ class BallotController extends Controller
 
         if ($election) {
             $user = Auth::user();
-            $alreadyVoted = Vote::where('election_id', $election->id)
-                ->where('user_id', $user->id)
-                ->exists();
+            $alreadyVoted = $user->has_voted
+                || Vote::where('election_id', $election->id)
+                    ->where('user_id', $user->id)
+                    ->exists();
 
             if ($alreadyVoted) {
                 return view('voter.ballot_already_voted', compact('election'));
@@ -111,10 +112,11 @@ class BallotController extends Controller
             return back()->withErrors(['election' => 'This election is not currently accepting votes.'])->withInput();
         }
 
-        // Optional: block double-voting (one-shot policy)
-        $alreadyVoted = Vote::where('election_id', $election->id)
-            ->where('user_id', $user->id)
-            ->exists();
+        // One ballot per voter per election window: votes and/or blank ballot (all skips) count.
+        $alreadyVoted = $user->has_voted
+            || Vote::where('election_id', $election->id)
+                ->where('user_id', $user->id)
+                ->exists();
 
         if ($alreadyVoted) {
             return redirect()->route('voter.ballot')->withErrors(['vote' => 'You have already cast your vote for this election.']);
@@ -134,10 +136,11 @@ class BallotController extends Controller
                     ]);
                 }
             }
+
+            User::query()->whereKey($user->id)->update(['has_voted' => true]);
         });
 
         $userModel = User::find($user->id);
-        $userModel->forceFill(['has_voted' => true])->save();
 
         $receiptRows = $this->buildVoteReceiptRows($election, (int) $user->id, $positionsPayload);
         $submittedAtDisplay = Carbon::now(Election::SCHEDULE_TIMEZONE)->format('F j, Y g:i A T');
