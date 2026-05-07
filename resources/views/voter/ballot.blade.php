@@ -46,10 +46,10 @@
       </span>
 
       <div class="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end">
-        <button type="button" id="btn-prev"
+        {{-- <button type="button" id="btn-prev"
                 class="cursor-pointer bg-gray-700 hover:bg-gray-700/80 px-4 sm:px-6 text-white py-1.5 rounded-full text-lg sm:text-2xl font-black hidden">
           Previous
-        </button>
+        </button> --}}
 
         <button type="button" id="btn-skip"
                 class="cursor-pointer bg-black hover:bg-black/80 px-4 sm:px-6 text-white py-1.5 rounded-full text-lg sm:text-2xl font-black">
