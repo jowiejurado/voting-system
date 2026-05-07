@@ -206,7 +206,6 @@
   const content = document.getElementById('content-area');
   const pill = document.getElementById('position-pill');
   const btnNext = document.getElementById('btn-next');
-  const btnPrev = document.getElementById('btn-prev');
   const btnSkip = document.getElementById('btn-skip');
 
   const skipModal = document.getElementById('skip-modal');
@@ -233,7 +232,6 @@
 
 		// hide/show top controls
 		btnSkip.classList.toggle('hidden', atReceipt);
-		btnPrev.classList.toggle('hidden', state.step === 0);
 
 		// NEW: hide footer nav entirely on receipt so there's only one Submit button
 		const footer = document.getElementById('footer-nav');
@@ -464,13 +462,6 @@
     if (!hasSelection(current())) return;
     nextStep();
   });
-  btnPrev.addEventListener('click', () => {
-    if (state.step > 0) {
-      state.step -= 1;
-      render();
-    }
-  });
-
   function nextStep() {
     if (state.step < positions.length) {
       state.step += 1;
