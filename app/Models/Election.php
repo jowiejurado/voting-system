@@ -185,6 +185,10 @@ class Election extends Model
                 $item->status = $newStatus;
                 $item->save();
 
+                if ($newStatus === 'current' && $previousStatus !== 'current') {
+                    User::query()->where('type', 'voter')->update(['has_voted' => false]);
+                }
+
                 if ($newStatus === 'completed' && $previousStatus !== 'completed') {
                     User::query()->where('type', 'voter')->update(['has_voted' => false]);
                 }

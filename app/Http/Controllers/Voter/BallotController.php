@@ -21,6 +21,7 @@ class BallotController extends Controller
 {
     public function showBallot(Request $request)
     {
+        Election::syncComputedStatuses();
         $now = Election::nowForSchedule();
 
         $election = Election::findActiveForBallot($now);
@@ -99,6 +100,7 @@ class BallotController extends Controller
 
     public function submit(SubmitBallotRequest $request)
     {
+        Election::syncComputedStatuses();
         $user = Auth::user();
 
         $election = Election::findOrFail($request->input('election_id'));

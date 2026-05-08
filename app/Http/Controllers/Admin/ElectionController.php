@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
+use App\Models\User;
 
 class ElectionController extends Controller
 {
@@ -73,13 +74,18 @@ class ElectionController extends Controller
         // assert_current_user_is_admin();
         // assert_admin_credentials($data['admin_id'], $data['password']);
 
-        Election::create([
+        $election = Election::create([
             'title' => $data['title'],
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'start_time' => $data['start_time'],
             'end_time' => $data['end_time'],
         ]);
+
+        $startAt = Election::parseScheduleStart($election);
+        if ($startAt && Election::nowForSchedule()->lt($startAt)) {
+            User::query()->where('type', 'voter')->update(['has_voted' => false]);
+        }
 
         return redirect()->route('admin.elections.index')
             ->with([
